@@ -69,6 +69,8 @@ def drawedges(edges, points, color='b-'):
         
 ### Algorithm functions
 
+""" maybe dont implement dcel but use https://github.com/anglyan/dcel """
+
 def connect_to(v, x):
     """ forms a DCEL connection from v to x"""
     return # void
@@ -83,6 +85,37 @@ def remove(edge):
     """
     return #void
 
+def  center(Vertex a, Vertex b, Vertex c):
+    """ Returns centroid (geometric center) of a triangle △abc """
+    """float avg_x=(a.x+b.x+c.x)/3;
+    float avg_y=(a.y+b.y+c.y)/3;
+    return new Vertex(avg_x,avg_y);"""
+    return # Vertex
+    
+def getSomeVisibleSegment(Vertex p):
+    """ Returns index of some segment on the convex hull visible from p """
+    """Vertex c = center(convex_hull[0], convex_hull[1], convex_hull[2]);
+    int min = 0;
+    int max = convex_hull.length - 1;
+    int i = Math.ceil((max-min)/2);
+
+    while(max>min) {
+    i = min + Math.ceil((max-min)/2);
+    if(isVisible(i, p)) {
+        return i;
+    }
+    if(isLeftOf(c, convex_hull[i], p)) {
+        min = i+1;
+    }
+    else {
+        max = i-1;
+    }
+    }
+    if(isVisible(max+1, p)) return max+1;
+    if(isVisible(max-1, p)) return max-1;
+    return max;"""
+    return # int max
+    
 def sortByDistance(input, origin):
     """ Returns a list of vertices sorted by euclidean distance to origin. """
     return #vertex list
@@ -104,6 +137,9 @@ def isVisible(index, vertex):
 
 def getLeftMostVisibleIndex(vertex):
     """ Returns the index of vertex on the convex hull furthest 'to the left' visible from x """
+    """int some = getSomeVisibleSegment(x);
+    while(isVisible(some-1, x)) some--;
+    return some;"""
     return #index of vertex
 
 def get_edge(a, b):
