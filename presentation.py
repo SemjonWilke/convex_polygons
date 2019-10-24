@@ -5,6 +5,8 @@ Software project for the Computational Geometry Week 2020 competition
 import matplotlib.pyplot as plt
 import json
 
+### Helper Functions
+
 def readtestinstance(filename):
     """ reads a test instance file by name
     input:      filename as string
@@ -65,6 +67,70 @@ def drawedges(edges, points, color='b-'):
             color
         )
 
+### Algorithm functions
+
+def sortByDistance(input, origin):
+    """ Returns a list of vertices sorted by euclidean distance to origin. """
+    return #vertex list
+
+def isLeftOf(l1, l2, x):
+    """ (Orientierungstest) Returns true if x is to the left of a line from l1 to l2. Otherwise false. """
+    """return ((l2.x - l1.x)*(x.y - l1.y) - (l2.y - l1.y)*(x.x - l1.x)) <= 0;"""
+    return #bool
+
+def isLeftOfedge(edge, vertex):
+    """ Same as above but takes an Edge as parameter instead of two points """
+    """return isLeftOf(edge.origin, e.next.origin, x);"""
+    return #bool
+
+def isVisible(index, vertex):
+    """ Returns true if the i'th segment of the convex_hull is visible from x """
+    """return !isLeftOf(convex_hull[index], convex_hull[index+1], vertex); # decide if convex_hull should be global"""
+    return #bool
+
+def getLeftMostVisibleIndex(vertex):
+    """ Returns the index of vertex on the convex hull furthest 'to the left' visible from x """
+    return #index of vertex
+
+def get_edge(a, b):
+    """ Note: will loop endlessly if a and b are not actually connected. """
+    """
+    Edge e = v1.IncidentEdge;
+    while(e.next.origin != v2) {
+        e = e.twin.next;
+    }
+    """
+    return # edge e between vertices a and b
+
+def iterate(p):
+    """int i = getLeftMostVisibleIndex();
+    int j = i;
+ 
+    Vertex v1 = convex_hull[i];
+    Vertex v2 = convex_hull[i+1];
+ 
+    Edge e = get_edge(v1, v2);
+ 
+    while(isVisible(e)) {
+        Edge n = e.next;
+ 
+        bool top_is_convex = !isLeftOf(e.twin.prev, p)
+        bool bottom_is_convex = !isLeftOf(e.twin.next, p)
+ 
+        e.origin.connect_to(p);
+        n.origin.connect_to(p);
+ 
+        if(top_is_convex && bottom_is_convex) e.remove();
+ 
+        e = n;
+        j++;
+    }
+    //TODO: replace indeces i to j in convex_hull with just p.
+    """
+    return # void
+    
+### Main
+        
 if __name__ == '__main__':
     points,instance = readtestinstance('euro-night-0000100.instance.json')
     drawpoints(points)
@@ -73,6 +139,28 @@ if __name__ == '__main__':
     '''
     edges = {'in' : [1,3,5,7,9], 'out' : [0,2,4,6,8]} # example
     #'''
+    
+    """
+    TODO: translate to python
+    Q = sortByDistance(input, origin);
+ 
+    first_triangle = [];
+    if(isLeftOf(Q[0], Q[1], Q[2])) {
+        convex_hull = [Q[0], Q[1], Q[2]];
+        Q[0].connect_to(Q[1]);
+        Q[1].connect_to(Q[2]);
+        Q[2].connect_to(Q[0]);
+    }
+    else {
+        convex_hull = [Q[0], Q[2], Q[1]];
+        Q[0].connect_to(Q[2]);
+        Q[2].connect_to(Q[1]);
+        Q[1].connect_to(Q[0]);
+    }
+ 
+    for(int i=3; i<Q.length; i++) iterate(Q[i]);
+    """
+    
     drawedges(edges,points)
     writetestsolution('euro-night-0000100.solution.json',instance)
     plt.show()
