@@ -66,8 +66,22 @@ def drawedges(edges, points, color='b-'):
             [points['y'][i], points['y'][j]],
             color
         )
-
+        
 ### Algorithm functions
+
+def connect_to(v, x):
+    """ forms a DCEL connection from v to x"""
+    return # void
+    
+def remove(edge):
+    """    if(origin.IncidentEdge==this) //TODO: set origin.IncidentEdge to an arbitrary Edge incident from origin
+        if(twin.origin.IncidentEdge==this) //TODO: twin.origin.IncidentEdge to an arbitrary Edge incident from twin.origin
+       
+        next.prev = twin.prev;
+        prev.next = twin.next;
+        twin.remove();
+    """
+    return #void
 
 def sortByDistance(input, origin):
     """ Returns a list of vertices sorted by euclidean distance to origin. """
@@ -78,9 +92,9 @@ def isLeftOf(l1, l2, x):
     """return ((l2.x - l1.x)*(x.y - l1.y) - (l2.y - l1.y)*(x.x - l1.x)) <= 0;"""
     return #bool
 
-def isLeftOfedge(edge, vertex):
+def isLeftOfedge(e, x):
     """ Same as above but takes an Edge as parameter instead of two points """
-    """return isLeftOf(edge.origin, e.next.origin, x);"""
+    """return isLeftOf(e.origin, e.next.origin, x);"""
     return #bool
 
 def isVisible(index, vertex):
