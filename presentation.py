@@ -1,7 +1,16 @@
+"""@package docstring
+Software project for the Computational Geometry Week 2020 competition
+"""
+
 import matplotlib.pyplot as plt
 import json
 
 def readtestinstance(filename):
+    """ reads a test instance file by name
+    input:      filename as string
+    returns:    points as dictionary of lists 'x' and 'y'
+                instance name as string
+    """
     points = {'x': [], 'y': []}
     with open(filename) as json_file:
         data = json.load(json_file)
@@ -13,6 +22,11 @@ def readtestinstance(filename):
         return points, instance
 
 def writetestsolution(filename, instance, edges=[]):
+    """ writes edges to a solution file
+    input:      filename as string
+                instance name as string
+                list of edges by indices of points
+    """
     data = {
         'type':'Solution',
         'instance_name' : instance,
@@ -29,10 +43,19 @@ def writetestsolution(filename, instance, edges=[]):
         json.dump(data, outfile)
 
 def drawpoints(points, color='r.'):
+    """ draws points to plt
+    input:      points as dictionary of lists 'x' and 'y'
+                color of points (matplotlib style)
+    """
     for i,val in enumerate(points['x']):
         plt.plot(points['x'][i], points['y'][i], color)
 
 def drawedges(edges, points, color='b-'):
+    """ draws edges to plt
+    input:      list of edges indexing points
+                points as dictionary of lists 'x' and 'y'
+                color of edges (matplotlib style)
+    """
     for index,val in enumerate(edges['in']):
         i = edges['in'][index]
         j = edges['out'][index]
