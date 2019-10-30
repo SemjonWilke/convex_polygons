@@ -123,9 +123,15 @@ def getLeftMostVisibleIndex(v): #untested
         some -= 1
     return some
 
-def sortByDistance(input, origin): #TODO
-    """ Returns a list of vertices sorted by euclidean distance to origin. """
-    return #vertex list
+def sortByDistance(p): #untested
+    """ Returns points sorted by euclidean distance to p with indices in correct permutation """
+    permutation = []
+    for i,val in enumerate(points['x']):
+        dist = sqrt((points['x'][i]-points['x'][p.index])**2 + \
+                    (points['y'][i]-points['y'][p.index])**2)
+        permutation.append((i,dist))
+
+    return permutation.sort(key=lambda tup: tup[1])
 
 def getEdge(a, b): #untested
     """ Note: will loop endlessly if a and b are not actually connected. """
@@ -166,6 +172,7 @@ if __name__ == '__main__':
 
     #'''
 
+    #TODO
     """
     Q = sortByDistance(input, origin);
 
