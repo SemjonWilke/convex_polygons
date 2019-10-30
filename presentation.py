@@ -71,7 +71,7 @@ def drawEdges(edges, points, color='b-'):
 ### Algorithm functions
 
 def  center(a, b, c): #untested
-    """ Returns centroid (geometric center) of a triangle △abc """
+    """ Returns centroid (geometric center) of a triangle abc """
     avg_x = (points[x][a.index]+points[x][b.index]+points[x][c.index]) / 3
     avg_y = (points[y][a.index]+points[y][b.index]+points[y][c.index]) / 3
     return Vertex(avg_x, avg_y)
@@ -110,9 +110,9 @@ def getSomeVisibleSegment(v): #untested
         else:
             max = i - 1
 
-    if isVisible(max + 1, v)
+    if isVisible(max + 1, v):
         return max + 1
-    if isVisible(max - 1, v)
+    if isVisible(max - 1, v):
         return max - 1
     return max
 
@@ -131,7 +131,7 @@ def getEdge(a, b): #untested
     """ Note: will loop endlessly if a and b are not actually connected. """
     e = a.IncidentEdge
     i = 0 # guard to prevent endless loop, i is at most |V| with V = E
-    while e.next.origin != b || i <= max(points[x]):
+    while e.next.origin != b or i <= max(points[x]):
         i += 1
         e = e.twin.next
     return e # edge e between vertices a and b
@@ -143,13 +143,13 @@ def iterate(v): #untested
     while isVisible(e, v):
         n = e.next
 
-        top_is_convex = !isLeftOf(e.twin.prev, v)
-        bot_is_convex = !isLeftOf(e.twin.next, v)
+        top_is_convex = not isLeftOf(e.twin.prev, v)
+        bot_is_convex = not isLeftOf(e.twin.next, v)
 
         e.origin.connectTo(v) # TODO function call an DCEL anpassen
         n.origin.connectTo(v) # TODO function call
 
-        if top_is_convex && bot_is_convex:
+        if top_is_convex and bot_is_convex:
             e.remove() # TODO function call
 
         e = n # TODO unsicher ob das klappt (ist ja kein pointer in python)
@@ -157,12 +157,13 @@ def iterate(v): #untested
 ### Main
 
 if __name__ == '__main__':
-    points,instance = readtestinstance('euro-night-0000100.instance.json')
-    drawpoints(points)
+    points,instance = readTestInstance('euro-night-0000100.instance.json')
+    drawPoints(points)
     #''' delete # to switch comments and have an example
     edges = {'in' : [], 'out' : []}
     '''
     edges = {'in' : [1,3,5,7,9], 'out' : [0,2,4,6,8]} # example
+
     #'''
 
     """
@@ -185,6 +186,6 @@ if __name__ == '__main__':
     for(int i=3; i<Q.length; i++) iterate(Q[i]);
     """
 
-    drawedges(edges,points)
-    writetestsolution('euro-night-0000100.solution.json',instance)
+    drawEdges(edges,points)
+    writeTestSolution('euro-night-0000100.solution.json',instance)
     plt.show()
