@@ -4,10 +4,11 @@ Software project for the Computational Geometry Week 2020 competition
 
 import matplotlib.pyplot as plt
 import json
+import math
 
 ### Helper Functions
 
-def readtestinstance(filename):
+def readTestInstance(filename):
     """ reads a test instance file by name
     input:      filename as string
     returns:    points as dictionary of lists 'x' and 'y'
@@ -23,7 +24,7 @@ def readtestinstance(filename):
         instance = data['name']
         return points, instance
 
-def writetestsolution(filename, instance, edges=[]):
+def writeTestSolution(filename, instance, edges=[]):
     """ writes edges to a solution file
     input:      filename as string
                 instance name as string
@@ -44,7 +45,7 @@ def writetestsolution(filename, instance, edges=[]):
     with open(filename, 'w') as outfile:
         json.dump(data, outfile)
 
-def drawpoints(points, color='r.'):
+def drawPoints(points, color='r.'):
     """ draws points to plt
     input:      points as dictionary of lists 'x' and 'y'
                 color of points (matplotlib style)
@@ -52,7 +53,7 @@ def drawpoints(points, color='r.'):
     for i,val in enumerate(points['x']):
         plt.plot(points['x'][i], points['y'][i], color)
 
-def drawedges(edges, points, color='b-'):
+def drawEdges(edges, points, color='b-'):
     """ draws edges to plt
     input:      list of edges indexing points
                 points as dictionary of lists 'x' and 'y'
@@ -66,121 +67,95 @@ def drawedges(edges, points, color='b-'):
             [points['y'][i], points['y'][j]],
             color
         )
-        
+
 ### Algorithm functions
 
-""" maybe dont implement dcel but use https://github.com/anglyan/dcel """
-
-def connect_to(v, x):
-    """ forms a DCEL connection from v to x"""
-    return # void
-    
-def remove(edge):
-    """    if(origin.IncidentEdge==this) //TODO: set origin.IncidentEdge to an arbitrary Edge incident from origin
-        if(twin.origin.IncidentEdge==this) //TODO: twin.origin.IncidentEdge to an arbitrary Edge incident from twin.origin
-       
-        next.prev = twin.prev;
-        prev.next = twin.next;
-        twin.remove();
-    """
-    return #void
-
-def  center(Vertex a, Vertex b, Vertex c):
+def  center(a, b, c): #untested
     """ Returns centroid (geometric center) of a triangle △abc """
-    """float avg_x=(a.x+b.x+c.x)/3;
-    float avg_y=(a.y+b.y+c.y)/3;
-    return new Vertex(avg_x,avg_y);"""
-    return # Vertex
-    
-def getSomeVisibleSegment(Vertex p):
-    """ Returns index of some segment on the convex hull visible from p """
-    """Vertex c = center(convex_hull[0], convex_hull[1], convex_hull[2]);
-    int min = 0;
-    int max = convex_hull.length - 1;
-    int i = Math.ceil((max-min)/2);
+    avg_x = (points[x][a.index]+points[x][b.index]+points[x][c.index]) / 3
+    avg_y = (points[y][a.index]+points[y][b.index]+points[y][c.index]) / 3
+    return Vertex(avg_x, avg_y)
 
-    while(max>min) {
-    i = min + Math.ceil((max-min)/2);
-    if(isVisible(i, p)) {
-        return i;
-    }
-    if(isLeftOf(c, convex_hull[i], p)) {
-        min = i+1;
-    }
-    else {
-        max = i-1;
-    }
-    }
-    if(isVisible(max+1, p)) return max+1;
-    if(isVisible(max-1, p)) return max-1;
-    return max;"""
-    return # int max
-    
-def sortByDistance(input, origin):
+def isLeftOf(a, b, v): #untested
+    """ (Orientierungstest) Returns true if v is to the left of a line from a to b. Otherwise false. """
+    if( (points[x][b.index] - points[x][a.index])*(points[y][v.index] - points[y][a.index]) - \
+        (points[y][b.index] - points[y][a.index])*(points[x][v.index] - points[x][a.index]) <= 0):
+        return True
+    return False
+
+def isLeftOfEdge(e, v): #untested
+    """ Same as above but takes an Edge as parameter instead of two points """
+    return isLeftOf(e.origin, e.next.origin, v)
+
+def isVisible(i, v): #untested
+    """ Returns true if the i'th segment of the convex_hull is visible from v """
+    if isleftof(convex_hull[i], convex_hull[i+1],v):
+        return False
+    return True
+
+def getSomeVisibleSegment(v): #untested
+    """ Returns index of some segment on the convex hull visible from v """
+    min = 0
+    max = len(convex_hull) - 1
+    i = math.ceil((max-min)/2)
+
+    while max > min:
+        i = min + math.ceil((max-min)/2)
+        if isVisible(i, v):
+            return i
+
+        if isLeftOf(center(convex_hull[0], convex_hull[1], convex_hull[2]), \
+                    convex_hull[i], v):
+            min = i + 1
+        else:
+            max = i - 1
+
+    if isVisible(max + 1, v)
+        return max + 1
+    if isVisible(max - 1, v)
+        return max - 1
+    return max
+
+def getLeftMostVisibleIndex(v): #untested
+    """ Returns the index of vertex v on the convex hull furthest 'to the left' visible from v """
+    some = getSomeVisibleSegment(v)
+    while isVisible(some-1, v):
+        some -= 1
+    return some
+
+def sortByDistance(input, origin): #TODO
     """ Returns a list of vertices sorted by euclidean distance to origin. """
     return #vertex list
 
-def isLeftOf(l1, l2, x):
-    """ (Orientierungstest) Returns true if x is to the left of a line from l1 to l2. Otherwise false. """
-    """return ((l2.x - l1.x)*(x.y - l1.y) - (l2.y - l1.y)*(x.x - l1.x)) <= 0;"""
-    return #bool
-
-def isLeftOfedge(e, x):
-    """ Same as above but takes an Edge as parameter instead of two points """
-    """return isLeftOf(e.origin, e.next.origin, x);"""
-    return #bool
-
-def isVisible(index, vertex):
-    """ Returns true if the i'th segment of the convex_hull is visible from x """
-    """return !isLeftOf(convex_hull[index], convex_hull[index+1], vertex); # decide if convex_hull should be global"""
-    return #bool
-
-def getLeftMostVisibleIndex(vertex):
-    """ Returns the index of vertex on the convex hull furthest 'to the left' visible from x """
-    """int some = getSomeVisibleSegment(x);
-    while(isVisible(some-1, x)) some--;
-    return some;"""
-    return #index of vertex
-
-def get_edge(a, b):
+def getEdge(a, b): #untested
     """ Note: will loop endlessly if a and b are not actually connected. """
-    """
-    Edge e = v1.IncidentEdge;
-    while(e.next.origin != v2) {
-        e = e.twin.next;
-    }
-    """
-    return # edge e between vertices a and b
+    e = a.IncidentEdge
+    i = 0 # guard to prevent endless loop, i is at most |V| with V = E
+    while e.next.origin != b || i <= max(points[x]):
+        i += 1
+        e = e.twin.next
+    return e # edge e between vertices a and b
 
-def iterate(p):
-    """int i = getLeftMostVisibleIndex();
-    int j = i;
- 
-    Vertex v1 = convex_hull[i];
-    Vertex v2 = convex_hull[i+1];
- 
-    Edge e = get_edge(v1, v2);
- 
-    while(isVisible(e)) {
-        Edge n = e.next;
- 
-        bool top_is_convex = !isLeftOf(e.twin.prev, p)
-        bool bottom_is_convex = !isLeftOf(e.twin.next, p)
- 
-        e.origin.connect_to(p);
-        n.origin.connect_to(p);
- 
-        if(top_is_convex && bottom_is_convex) e.remove();
- 
-        e = n;
-        j++;
-    }
-    //TODO: replace indeces i to j in convex_hull with just p.
-    """
-    return # void
-    
+def iterate(v): #untested
+    i = getLeftMostVisibleIndex(v)
+    e = getEdge(convex_hull[i], convex_hull[i+1])
+
+    while isVisible(e, v):
+        n = e.next
+
+        top_is_convex = !isLeftOf(e.twin.prev, v)
+        bot_is_convex = !isLeftOf(e.twin.next, v)
+
+        e.origin.connectTo(v) # TODO function call an DCEL anpassen
+        n.origin.connectTo(v) # TODO function call
+
+        if top_is_convex && bot_is_convex:
+            e.remove() # TODO function call
+
+        e = n # TODO unsicher ob das klappt (ist ja kein pointer in python)
+
 ### Main
-        
+
 if __name__ == '__main__':
     points,instance = readtestinstance('euro-night-0000100.instance.json')
     drawpoints(points)
@@ -189,11 +164,10 @@ if __name__ == '__main__':
     '''
     edges = {'in' : [1,3,5,7,9], 'out' : [0,2,4,6,8]} # example
     #'''
-    
+
     """
-    TODO: translate to python
     Q = sortByDistance(input, origin);
- 
+
     first_triangle = [];
     if(isLeftOf(Q[0], Q[1], Q[2])) {
         convex_hull = [Q[0], Q[1], Q[2]];
@@ -207,10 +181,10 @@ if __name__ == '__main__':
         Q[2].connect_to(Q[1]);
         Q[1].connect_to(Q[0]);
     }
- 
+
     for(int i=3; i<Q.length; i++) iterate(Q[i]);
     """
-    
+
     drawedges(edges,points)
     writetestsolution('euro-night-0000100.solution.json',instance)
     plt.show()
