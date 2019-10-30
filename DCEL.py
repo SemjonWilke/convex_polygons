@@ -1,12 +1,13 @@
 import math
 
 
+# Sample data for testing
 points = dict()
 points['x'] = [0, 1, 0, 1]
 points['y'] = [0, 0, 1, 1]
 
 
-
+# Returns angle between an edge and a origin-c edge
 def angle(edge, c):
     a=edge.nxt.origin
     b=edge.origin
@@ -15,28 +16,35 @@ def angle(edge, c):
     return ang + 360 if ang < 0 else ang
     
     
+# Sets two edges as twins
 def twin(e1, e2):
     e1.twin = e2
     e2.twin = e1
     
+    
+# Sets two edges as successors
 def chain(e1, e2):
     e1.nxt = e2
-    e2.prev = e1
-    
-    
+    e2.prev = e1    
 
+    
+# Vertex class
 class Vertex:
     i = -1
     incidentEdge = None
+    
     def x(self):
         return points['x'][self.i]
+    
     def y(self):
         return points['y'][self.i]
+    
     def __init__(self, i):
         self.i=i
+        
     def __str__(self):
-        '''could be helpful for testing purposes'''
         return "Index: {0} X: {1} Y: {2}".format(self.i,self.x(),self.y())
+    
     def get_left_right_edge(self, v):
         min_angle = 99999
         max_angle = -99999
@@ -58,7 +66,9 @@ class Vertex:
             
             e = e.twin.nxt
             if(e==self.incidentEdge): break
+                
         return max_angle_edge, min_angle_edge
+    
     def connect_to(self, v):
         assert(self.incidentEdge!=None)
         
@@ -91,25 +101,19 @@ class Vertex:
             
             twin(s_to_v, v_to_s)
 
-    
 
+# Edge class
 class Edge:
     origin = None
     prev = None
     nxt = None
     twin = None
     
-    def __init__(self,
-            origin=None,
-            prev=None,
-            nxt=None
-            ):
-
+    def __init__(self, origin=None, prev=None, nxt=None):
         self.origin=origin;
         self.prev=prev; 
         self.nxt=nxt;
         self.twin=twin;
-
 
     def __str__(self):
         '''could be helpful for testing purposes'''
@@ -126,9 +130,7 @@ class Edge:
         if(recursive): self.twin.remove(False)
 
 
-
-
-    
+# Function to print information on a vertex. Useful for debugging
 def print_vertex(v):
     print("Vertex: " + str(v.x()) + " : " + str(v.y()))
     e = v.incidentEdge
@@ -177,20 +179,3 @@ print_vertex(t2)
 print_vertex(t3)
 print_vertex(t4)
 """
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
