@@ -77,7 +77,7 @@ def  center(a, b, c): #untested
     return Vertex(avg_x, avg_y)
 
 def isLeftOf(a, b, v): #untested
-    """ (Orientierungstest) Returns true if v is to the left of a line from a to b. Otherwise false. """
+    """ (Orient.test) Returns true if v is to the left of a line from a to b. Otherwise false. """
     if( (points[x][b.index] - points[x][a.index])*(points[y][v.index] - points[y][a.index]) - \
         (points[y][b.index] - points[y][a.index])*(points[x][v.index] - points[x][a.index]) <= 0):
         return True
