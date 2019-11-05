@@ -5,6 +5,7 @@ Software project for the Computational Geometry Week 2020 competition
 import matplotlib.pyplot as plt
 import json
 import math
+import sys
 import DCEL
 from DCEL import Vertex
 
@@ -160,10 +161,10 @@ def getEdge(a, b): #untested
     """ Note: will loop endlessly if a and b are not actually connected. """
     e = a.incidentEdge
     i = 0 # guard to prevent endless loop, i is at most |V| with V = E
-    while e.nxt.origin != b and i < len(points):
+    while e.nxt.origin != b and i <= len(points['x']):
         i += 1
         e = e.twin.nxt
-    if(i>=len(points) and e.nxt.origin != b): print("ERR: POINTS NOT CONNECTED")
+    if(i>len(points['x'])): print("ERR: POINTS NOT CONNECTED")
     return e # edge e between vertices a and b
 
 def update_convex_hull(i, j ,v):
@@ -175,9 +176,7 @@ def update_convex_hull(i, j ,v):
     else:
         convex_hull[i+1:j] = [v]
 
-def iterate(v, b, vn): #untested
-    #test_block()
-
+def iterate(v):
     i = getLeftMostVisibleIndex(v)
     j = i
     e = getEdge(ch(i), ch(i+1))
@@ -185,13 +184,13 @@ def iterate(v, b, vn): #untested
     while isVisibleEdge(e, v):
         n = e.nxt
 
-        #test_block(e)
+        if(len(sys.argv)>1 and sys.argv[1]=="showcase"): test_block(e, v)
 
         top_is_convex = not isLeftOfEdge(e.twin.prev, v)
         bot_is_convex = not isLeftOfEdge(e.twin.nxt, v)
 
         e.origin.connect_to(v)
-        n.origin.connect_to(v)
+        if not isVisibleEdge(n, v): n.origin.connect_to(v) #This seems inefficient
 
         if top_is_convex and bot_is_convex:
             e.remove()
@@ -199,9 +198,9 @@ def iterate(v, b, vn): #untested
         e = n
         j+=1
 
-    if(b): test_block(p=vn)
+    if(len(sys.argv)>1 and sys.argv[1]=="showcase"): test_block()
     update_convex_hull(i, j, v)
-    #test_block()
+    if(len(sys.argv)>1 and sys.argv[1]=="showcase"): test_block()
 
 ### Main
 
@@ -209,26 +208,25 @@ def test_block(e=None, p=None):
     edges = DCEL.get_edge_dict()
     plt.cla()
     drawEdges(edges,points)
+    drawPoints(points)
     drawHull()
     if(e!=None): drawSingleEdge(e)
     if(p!=None): drawSinglePoint(p)
     plt.draw()
     plt.pause(0.001)
-    input("Press Enter to continue...")
+    input("")
 
 if __name__ == '__main__':
+    plt.rcParams["figure.figsize"] = (16,9)
     points,instance = readTestInstance('euro-night-0000100.instance.json')
-    drawPoints(points)
-    #''' delete # to switch comments and have an example
-    edges = {'in' : [], 'out' : []}
-
     DCEL.points = points
 
     origin = Vertex(explicit_x=6500, explicit_y=4000)
+    if len(sys.argv)>3: origin = Vertex(explicit_x=int(sys.argv[2]), explicit_y=int(sys.argv[3]))
     vertices = [Vertex(index=i) for i in range(len(points['x']))]
     sortByDistance(vertices, origin)
-    #vertices = vertices[0:46]
 
+    # Create the first triangle
     if(isLeftOf(vertices[0], vertices[1], vertices[2])):
         convex_hull = [vertices[0], vertices[1], vertices[2]]
         DCEL.make_triangle(vertices[0], vertices[1], vertices[2])
@@ -236,15 +234,11 @@ if __name__ == '__main__':
         convex_hull = [vertices[0], vertices[2], vertices[1]]
         DCEL.make_triangle(vertices[0], vertices[2], vertices[1])
 
-    for i in range(3, len(vertices)-1): iterate(vertices[i], i>100, vertices[i+1])
+    for i in range(3, len(vertices)): iterate(vertices[i])
 
     edges = DCEL.get_edge_dict()
 
-    '''
-    edges = {'in' : [1,3,5,7,9], 'out' : [0,2,4,6,8]} # example
-
-    #'''
-
     drawEdges(edges,points)
+    drawPoints(points)
     writeTestSolution('euro-night-0000100.solution.json',instance)
     plt.show()
