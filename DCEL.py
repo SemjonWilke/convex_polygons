@@ -2,8 +2,8 @@ import math
 
 # Sample data for testing
 points = dict()
-points['x'] = [0, 1, 0, 1]
-points['y'] = [0, 0, 1, 1]
+#points['x'] = [0, 1, 0, 1]
+#points['y'] = [0, 0, 1, 1]
 
 # Returns angle between an edge and a origin-c edge
 def angle(edge, c):
@@ -27,15 +27,21 @@ def chain(e1, e2):
 class Vertex:
     i = -1
     incidentEdge = None
+    explicit_x = None
+    explicit_y = None
 
     def x(self):
-        return points['x'][self.i]
+        if(self.i>-1): return points['x'][self.i]
+        return self.explicit_x
 
     def y(self):
-        return points['y'][self.i]
+        if(self.i>-1): return points['y'][self.i]
+        return self.explicit_y
 
-    def __init__(self, i):
-        self.i=i
+    def __init__(self, explicit_x=None, explicit_y=None, index=-1):
+        self.i=index
+        self.explicit_x=explicit_x
+        self.explicit_y=explicit_y
 
     def __str__(self):
         return "Index: {0} X: {1} Y: {2}".format(self.i,self.x(),self.y())
@@ -96,6 +102,12 @@ class Vertex:
 
             twin(s_to_v, v_to_s)
 
+edge_list = []
+
+def get_edge_dict():
+    ret = {'in' : [e.origin.i for e in edge_list], 'out' : [e.nxt.origin.i for e in edge_list]}
+    return ret
+
 # Edge class
 class Edge:
     origin = None
@@ -108,6 +120,7 @@ class Edge:
         self.prev=prev;
         self.nxt=nxt;
         self.twin=twin;
+        edge_list.append(self)
 
     def __str__(self):
         '''could be helpful for testing purposes'''
@@ -115,6 +128,7 @@ class Edge:
                 self.prev.origin,self.nxt.origin,self.twin.origin)
 
     def remove(self, recursive=True):
+        edge_list.remove(self)
         self.nxt.prev = self.twin.prev
         self.prev.nxt = self.twin.nxt
 
@@ -132,6 +146,27 @@ def print_vertex(v):
             print(e)
             e = e.twin.nxt
             if(e==v.incidentEdge): break
+
+def make_triangle(a, b, c):
+    a.incidentEdge = Edge(a, None, None)
+    b.incidentEdge = Edge(b, None, None)
+    c.incidentEdge = Edge(c, None, None)
+
+    chain(a.incidentEdge, b.incidentEdge)
+    chain(b.incidentEdge, c.incidentEdge)
+    chain(c.incidentEdge, a.incidentEdge)
+
+    a.incidentEdge.twin = Edge(b, None, None)
+    b.incidentEdge.twin = Edge(c, None, None)
+    c.incidentEdge.twin = Edge(a, None, None)
+
+    chain(a.incidentEdge.twin, c.incidentEdge.twin)
+    chain(c.incidentEdge.twin, b.incidentEdge.twin)
+    chain(b.incidentEdge.twin, a.incidentEdge.twin)
+
+    twin(a.incidentEdge, a.incidentEdge.twin)
+    twin(b.incidentEdge, b.incidentEdge.twin)
+    twin(c.incidentEdge, c.incidentEdge.twin)
 
 """
 #Testing
