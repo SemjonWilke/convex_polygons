@@ -41,7 +41,7 @@ def writeTestSolution(filename, instance, edges=[]):
                 list of edges by indices of points
     """
     filename = filename.split(".",1)[0] + ".solution.json"
-    
+
     data = {
         'type':'Solution',
         'instance_name' : instance,
@@ -125,7 +125,7 @@ def  center(a, b, c):
 
 def isLeftOf(a, b, v):
     """ (Orient.test) Returns true if v is to the left of a line from a to b. Otherwise false. """
-    return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
+    return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) >= 0
 
 def isLeftOfEdge(e, v):
     """ Same as above but takes an Edge as parameter instead of two points """
@@ -250,7 +250,7 @@ if __name__ == '__main__':
     debug = 0
     if len(sys.argv) > 2 and sys.argv[2] == "showcase":
         debug = 1
-        
+
     plt.rcParams["figure.figsize"] = (16,9)
     points,instance = readTestInstance(sys.argv[1])
     DCEL.points = points
