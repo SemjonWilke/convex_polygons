@@ -240,7 +240,3 @@ TSWLatexianTemp*
 
 # generated if using elsarticle.cls
 *.spl
-
-# files of the SoCG contest
-*.instance.json
-*.solution.json
