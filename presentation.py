@@ -48,22 +48,48 @@ def writeTestSolution(filename, instance, edges=[]):
         'meta' : {'comment':''},
         'edges' : []
     }
-    for edge in edges:
+    for index,val in enumerate(edges['in']):
         data['edges'].append({
-            'i': str(edge['in']),
-            'j': str(edge['out']),
+            'i': str(edges['in'][index]),
+            'j': str(edges['out'][index]),
         })
 
     with open(filename, 'w') as outfile:
         json.dump(data, outfile)
 
-def drawPoints(points, color='r.'):
+def col(color, degree, index):
+    if degree == None:
+        return color
+    if degree[index] == 0 or degree[index] == 1:
+        return 'w' #white
+    if degree[index] == 2:
+        return 'g' #green
+    if degree[index] == 3:
+        return 'y' #yellow
+    if degree[index] >= 4:
+    #    return 'c' #cyan
+    #if degree[index] == 5:
+    #    return 'm' #magenta
+    #if degree[index] >= 6:
+        return 'r' #red
+
+def drawPoints(points, edges=None, color='r'):
     """ draws points to plt
     input:      points as dictionary of lists 'x' and 'y'
                 color of points (matplotlib style)
     """
+    degree = None
+    if edges != None:
+        degree = [0]*len(points['x'])
+        for ein in edges['in']:
+            degree[ein] += 1
+        for eout in edges['out']:
+            degree[eout] += 1
+        for index,val in enumerate(degree): #TODO leftover
+            degree[index] >>= 1
+
     for i,val in enumerate(points['x']):
-        plt.plot(points['x'][i], points['y'][i], color)
+        plt.plot(points['x'][i], points['y'][i], col(color,degree,i)+'o')
 
 def drawEdges(edges, points, color='b-'):
     """ draws edges to plt
@@ -276,6 +302,6 @@ if __name__ == '__main__':
     edges = DCEL.get_edge_dict()
 
     drawEdges(edges,points)
-    drawPoints(points)
-    writeTestSolution(sys.argv[1],instance)
+    drawPoints(points,edges)
+    writeTestSolution(sys.argv[1],instance,edges)
     plt.show()
