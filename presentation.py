@@ -40,6 +40,8 @@ def writeTestSolution(filename, instance, edges=[]):
                 instance name as string
                 list of edges by indices of points
     """
+    filename = filename.split(".",1)[0] + ".solution.json"
+    
     data = {
         'type':'Solution',
         'instance_name' : instance,
@@ -90,43 +92,65 @@ def drawSingleEdge(e):
 def drawSinglePoint(v):
     plt.plot(v.x(), v.y(), 'ks')
 
+def test_block(e=None, p=None):
+    edges = DCEL.get_edge_dict()
+    plt.cla()
+    drawEdges(edges,points)
+    drawPoints(points)
+    drawHull()
+    if e != None:
+        drawSingleEdge(e)
+    if p != None:
+        drawSinglePoint(p)
+    plt.draw()
+    plt.pause(0.001)
+    input("")
+
+def usage():
+    print("This program calculates solutions for SoCG contest")
+    print("usage:\npython3 presentation.py <instance> [showcase] [<x-coordinates> <y-coordinates>]")
+    print("\t<instance>\tis the filename of the instance file")
+    print("\t[showcase]\tuse this argument to start visualization mode")
+    print("\t[x-coordinates]\tof the starting point")
+    print("\t[y-coordinates]\tof the starting point")
+    sys.exit(1)
+
 ### Algorithm functions
 
-def  center(a, b, c): #untested
+def  center(a, b, c):
     """ Returns centroid (geometric center) of a triangle abc """
     avg_x = (a.x()+b.x()+c.x()) / 3
     avg_y = (a.y()+b.y()+c.y()) / 3
     return Vertex(explicit_x=avg_x, explicit_y=avg_y)
 
-def isLeftOf(a, b, v): #untested
+def isLeftOf(a, b, v):
     """ (Orient.test) Returns true if v is to the left of a line from a to b. Otherwise false. """
     return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
 
-def isLeftOfEdge(e, v): #untested
+def isLeftOfEdge(e, v):
     """ Same as above but takes an Edge as parameter instead of two points """
     return isLeftOf(e.origin, e.nxt.origin, v)
 
-def isVisible(i, v): #untested
+def isVisible(i, v):
     """ Returns true if the i'th segment of the convex_hull is visible from v """
     return not isLeftOf(ch(i), ch(i+1), v)
 
-def isVisibleEdge(e, v): #untested
+def isVisibleEdge(e, v):
     """ Returns true if the i'th segment of the convex_hull is visible from v """
     return not isLeftOf(e.origin, e.nxt.origin, v)
 
-def getSomeVisibleSegment(v): #untested
+def getSomeVisibleSegment(v):
     """ Returns index of some segment on the convex hull visible from v """
     min = 0
     max = len(convex_hull) - 1
-    i = math.ceil((max-min)/2)
+    i = math.ceil((max - min) / 2)
 
     while max > min:
-        i = min + math.ceil((max-min)/2)
+        i = min + math.ceil((max - min) / 2)
         if isVisible(i, v):
             return i
 
-        if isLeftOf(center(ch(0), ch(1), ch(2)), \
-                    ch(i), v):
+        if isLeftOf(center(ch(0), ch(1), ch(2)), ch(i), v):
             min = i + 1
         else:
             max = i - 1
@@ -136,15 +160,16 @@ def getSomeVisibleSegment(v): #untested
     if isVisible(max - 1, v):
         return max - 1
     if not isVisible(max, v):
-        print("ERROR: NON-VISIBLE-EDGE! FALLING BACK TO ITERATIVE RESULT")
+        print("ERROR: NON-VISIBLE-EDGE! Falling back to iterative result.")
         for i in range(len(convex_hull)):
-            if isVisible(i, v): return i
+            if isVisible(i, v):
+                return i
     return max
 
-def getLeftMostVisibleIndex(v): #untested
+def getLeftMostVisibleIndex(v):
     """ Returns the index of vertex v on the convex hull furthest 'to the left' visible from v """
     some = getSomeVisibleSegment(v)
-    while isVisible(some-1, v):
+    while isVisible(some - 1, v):
         some -= 1
     return some
 
@@ -157,26 +182,27 @@ def sortByDistance(vlist, p):
     """ Sorts a list of vertices by euclidean distance towards a reference vertex p """
     vlist.sort(key=lambda x: get_distance(x, p))
 
-def getEdge(a, b): #untested
+def getEdge(a, b):
     """ Note: will loop endlessly if a and b are not actually connected. """
     e = a.incidentEdge
     i = 0 # guard to prevent endless loop, i is at most |V| with V = E
     while e.nxt.origin != b and i <= len(points['x']):
         i += 1
         e = e.twin.nxt
-    if(i>len(points['x'])): print("ERR: POINTS NOT CONNECTED")
+    if i > len(points['x']):
+        print("ERROR: Points (%i,%i) not connected" % (a.i, b.i))
     return e # edge e between vertices a and b
 
 def update_convex_hull(i, j ,v):
     i = ch_i(i)
     j = ch_i(j)
-    if(j<i):
+    if j < i:
         convex_hull[i+1:len(convex_hull)] = [v]
         convex_hull[0:j] = []
     else:
         convex_hull[i+1:j] = [v]
 
-def iterate(v):
+def iterate(v, debug):
     i = getLeftMostVisibleIndex(v)
     j = i
     e = getEdge(ch(i), ch(i+1))
@@ -184,61 +210,72 @@ def iterate(v):
     while isVisibleEdge(e, v):
         n = e.nxt
 
-        if(len(sys.argv)>1 and sys.argv[1]=="showcase"): test_block(e, v)
+        if debug == 1:
+            test_block(e, v)
 
         top_is_convex = not isLeftOfEdge(e.twin.prev, v)
         bot_is_convex = not isLeftOfEdge(e.twin.nxt, v)
 
         e.origin.connect_to(v)
-        if not isVisibleEdge(n, v): n.origin.connect_to(v) #This seems inefficient
+        if not isVisibleEdge(n, v):
+            n.origin.connect_to(v) #This seems inefficient
 
         if top_is_convex and bot_is_convex:
             e.remove()
 
         e = n
-        j+=1
+        j += 1
 
-    if(len(sys.argv)>1 and sys.argv[1]=="showcase"): test_block()
+    if debug == 1:
+            test_block(e, v)
     update_convex_hull(i, j, v)
-    if(len(sys.argv)>1 and sys.argv[1]=="showcase"): test_block()
+    if debug == 1:
+            test_block(e, v)
 
 ### Main
 
-def test_block(e=None, p=None):
-    edges = DCEL.get_edge_dict()
-    plt.cla()
-    drawEdges(edges,points)
-    drawPoints(points)
-    drawHull()
-    if(e!=None): drawSingleEdge(e)
-    if(p!=None): drawSinglePoint(p)
-    plt.draw()
-    plt.pause(0.001)
-    input("")
-
 if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("ERROR: Not enough arguments")
+        usage()
+    if sys.argv[1] == "help" or sys.argv[1] == "/?" or sys.argv[1] == "?" or \
+       sys.argv[1] == "--help" or sys.argv[1] == "-h":
+        usage()
+    try:
+        f = open(sys.argv[1])
+        f.close()
+    except:
+        print("ERROR: File %s does not exist" % (sys.argv[1]))
+        usage()
+    debug = 0
+    if len(sys.argv) > 2 and sys.argv[2] == "showcase":
+        debug = 1
+        
     plt.rcParams["figure.figsize"] = (16,9)
-    points,instance = readTestInstance('euro-night-0000100.instance.json')
+    points,instance = readTestInstance(sys.argv[1])
     DCEL.points = points
 
     origin = Vertex(explicit_x=6500, explicit_y=4000)
-    if len(sys.argv)>3: origin = Vertex(explicit_x=int(sys.argv[2]), explicit_y=int(sys.argv[3]))
+    if len(sys.argv) > 4:
+        origin = Vertex(explicit_x=int(sys.argv[3]), explicit_y=int(sys.argv[4]))
     vertices = [Vertex(index=i) for i in range(len(points['x']))]
     sortByDistance(vertices, origin)
 
     # Create the first triangle
-    if(isLeftOf(vertices[0], vertices[1], vertices[2])):
+    if isLeftOf(vertices[0], vertices[1], vertices[2]):
         convex_hull = [vertices[0], vertices[1], vertices[2]]
         DCEL.make_triangle(vertices[0], vertices[1], vertices[2])
     else:
         convex_hull = [vertices[0], vertices[2], vertices[1]]
         DCEL.make_triangle(vertices[0], vertices[2], vertices[1])
 
-    for i in range(3, len(vertices)): iterate(vertices[i])
+    for i in range(3, len(vertices)):
+        iterate(vertices[i], debug)
+        sys.stdout.flush()
 
     edges = DCEL.get_edge_dict()
 
     drawEdges(edges,points)
     drawPoints(points)
-    writeTestSolution('euro-night-0000100.solution.json',instance)
+    writeTestSolution(sys.argv[1],instance)
     plt.show()
