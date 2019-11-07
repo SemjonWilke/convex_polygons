@@ -260,6 +260,39 @@ def iterate(v, debug):
 
 ### Main
 
+def run(filename, debug, x=6000, y=4500):
+    global convex_hull
+    global points
+    
+    plt.rcParams["figure.figsize"] = (16,9)
+    points,instance = readTestInstance(filename)
+    DCEL.points = points
+
+    origin = Vertex(explicit_x=x, explicit_y=y)
+    print("Start points are (%i|%i)" % (origin.explicit_x, origin.explicit_y))
+
+    vertices = [Vertex(index=i) for i in range(len(points['x']))]
+    sortByDistance(vertices, origin)
+
+    # Create the first triangle
+    if isLeftOf(vertices[0], vertices[1], vertices[2]):
+        convex_hull = [vertices[0], vertices[1], vertices[2]]
+        DCEL.make_triangle(vertices[0], vertices[1], vertices[2])
+    else:
+        convex_hull = [vertices[0], vertices[2], vertices[1]]
+        DCEL.make_triangle(vertices[0], vertices[2], vertices[1])
+    
+    for i in range(3, len(vertices)):
+        iterate(vertices[i], debug)
+        sys.stdout.flush()
+    
+    edges = DCEL.get_edge_dict()
+
+    drawEdges(edges,points)
+    drawPoints(points,edges)
+    writeTestSolution(filename,instance,edges)
+    plt.show()
+
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print("ERROR: Not enough arguments")
@@ -277,34 +310,9 @@ if __name__ == '__main__':
     if len(sys.argv) > 2 and sys.argv[2] == "showcase":
         print("Showcase mode")
         debug = 1
-
-    plt.rcParams["figure.figsize"] = (16,9)
-    points,instance = readTestInstance(sys.argv[1])
-    DCEL.points = points
-
-    origin = Vertex(explicit_x=6500, explicit_y=4000)
+        
     if len(sys.argv) > 4:
-        origin = Vertex(explicit_x=int(sys.argv[3]), explicit_y=int(sys.argv[4]))
-    print("Start points are (%i|%i)" % (origin.explicit_x, origin.explicit_y))
-
-    vertices = [Vertex(index=i) for i in range(len(points['x']))]
-    sortByDistance(vertices, origin)
-
-    # Create the first triangle
-    if isLeftOf(vertices[0], vertices[1], vertices[2]):
-        convex_hull = [vertices[0], vertices[1], vertices[2]]
-        DCEL.make_triangle(vertices[0], vertices[1], vertices[2])
+        run(sys.argv[1], debug, sys.argv[3], sys.argv[4])
     else:
-        convex_hull = [vertices[0], vertices[2], vertices[1]]
-        DCEL.make_triangle(vertices[0], vertices[2], vertices[1])
-
-    for i in range(3, len(vertices)):
-        iterate(vertices[i], debug)
-        sys.stdout.flush()
-
-    edges = DCEL.get_edge_dict()
-
-    drawEdges(edges,points)
-    drawPoints(points,edges)
-    writeTestSolution(sys.argv[1],instance,edges)
-    plt.show()
+        run(sys.argv[1], debug)
+    
