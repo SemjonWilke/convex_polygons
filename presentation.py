@@ -40,8 +40,9 @@ def writeTestSolution(filename, instance, edges=[]):
                 instance name as string
                 list of edges by indices of points
     """
-    filename = filename.split(".",1)[0] + ".solution.json"
-
+    filename = "solutions/" + filename.split("/",1)[-1] # fix path
+    filename = filename.split(".",1)[0] + ".solution.json" # substitute "instance" with "solution"
+    
     data = {
         'type':'Solution',
         'instance_name' : instance,
@@ -56,6 +57,7 @@ def writeTestSolution(filename, instance, edges=[]):
 
     with open(filename, 'w') as outfile:
         json.dump(data, outfile)
+    print("Solution written to %s" % (filename))
 
 def col(color, degree, index):
     if degree == None:
@@ -85,8 +87,6 @@ def drawPoints(points, edges=None, color='r'):
             degree[ein] += 1
         for eout in edges['out']:
             degree[eout] += 1
-        for index,val in enumerate(degree): #TODO leftover
-            degree[index] >>= 1
 
     for i,val in enumerate(points['x']):
         plt.plot(points['x'][i], points['y'][i], col(color,degree,i)+'o')
@@ -275,6 +275,7 @@ if __name__ == '__main__':
         usage()
     debug = 0
     if len(sys.argv) > 2 and sys.argv[2] == "showcase":
+        print("Showcase mode")
         debug = 1
 
     plt.rcParams["figure.figsize"] = (16,9)
@@ -284,6 +285,8 @@ if __name__ == '__main__':
     origin = Vertex(explicit_x=6500, explicit_y=4000)
     if len(sys.argv) > 4:
         origin = Vertex(explicit_x=int(sys.argv[3]), explicit_y=int(sys.argv[4]))
+    print("Start points are (%i|%i)" % (origin.explicit_x, origin.explicit_y))
+
     vertices = [Vertex(index=i) for i in range(len(points['x']))]
     sortByDistance(vertices, origin)
 
