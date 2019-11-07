@@ -30,6 +30,12 @@ class Vertex:
     explicit_x = None
     explicit_y = None
 
+    def __eq__(self, v):
+        return self.i== v.i
+
+    def __hash__(self):
+        return hash(repr(self))
+
     def x(self):
         if(self.i>-1): return points['x'][self.i]
         return self.explicit_x
@@ -105,8 +111,15 @@ class Vertex:
 edge_list = []
 
 def get_edge_dict():
+    global edge_list
+    _set = set()
+    for e in edge_list:
+        if e.twin not in _set:
+            _set.add(e)
+    edge_list = list(_set)
     ret = {'in' : [e.origin.i for e in edge_list], 'out' : [e.nxt.origin.i for e in edge_list]}
     return ret
+
 
 # Edge class
 class Edge:
@@ -121,6 +134,12 @@ class Edge:
         self.nxt=nxt;
         self.twin=twin;
         edge_list.append(self)
+
+    def __eq__(self, e):
+        return repr(self) == repr(e)
+
+    def __hash__(self):
+        return hash(repr(self))
 
     def __str__(self):
         '''could be helpful for testing purposes'''
