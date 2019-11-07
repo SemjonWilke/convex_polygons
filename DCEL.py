@@ -1,7 +1,7 @@
 import math
 
 # Sample data for testing
-points = dict()
+points = []
 #points['x'] = [0, 1, 0, 1]
 #points['y'] = [0, 0, 1, 1]
 
@@ -37,11 +37,11 @@ class Vertex:
         return hash(repr(self))
 
     def x(self):
-        if(self.i>-1): return points['x'][self.i]
+        if(self.i>-1): return points[self.i][0]
         return self.explicit_x
 
     def y(self):
-        if(self.i>-1): return points['y'][self.i]
+        if(self.i>-1): return points[self.i][1]
         return self.explicit_y
 
     def __init__(self, explicit_x=None, explicit_y=None, index=-1):
