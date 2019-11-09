@@ -8,6 +8,8 @@ import math
 import sys
 import DCEL
 from DCEL import Vertex
+from middleware import snapshoot_t
+import time
 
 convex_hull = []
 def ch(i):
@@ -201,7 +203,9 @@ def getLeftMostVisibleIndex(v):
 
 # Inserted
 def get_distance(v1, v2):
-    return math.sqrt( math.pow( v2.x() - v1.x(), 2) + math.pow( v2.y() - v1.y(), 2))
+    
+    return (v2.x() - v1.x())**2 + ( v2.y() - v1.y())**2
+
 
 # Overwritten
 def sortByDistance(vlist, p):
@@ -261,6 +265,7 @@ def iterate(v, debug):
 ### Main
 
 if __name__ == '__main__':
+    start_t = time.process_time()
     if len(sys.argv) < 2:
         print("ERROR: Not enough arguments")
         usage()
@@ -304,7 +309,14 @@ if __name__ == '__main__':
 
     edges = DCEL.get_edge_dict()
 
+    snapshoot_t(start_t, "computation")
+
+    writeTestSolution(sys.argv[1],instance,edges)
+
+    start_t = time.process_time()
+
     drawEdges(edges,points)
     drawPoints(points,edges)
-    writeTestSolution(sys.argv[1],instance,edges)
+    snapshoot_t(start_t, "plotting")
+    
     plt.show()

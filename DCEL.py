@@ -108,17 +108,72 @@ class Vertex:
 
             twin(s_to_v, v_to_s)
 
-edge_list = []
+class _list:
+    _head = None
+    _tail = None
+    _size = 0
+
+    def __init__(self):
+        self._head = None
+        self._tail = None
+        self._size = 0
+
+    def remove(self, _e):
+        if self._size == 0:
+            return
+        elif self._size == 1:
+            self._head = None
+            self._tail = None
+            self._size = 0
+        else:
+            if _e.pred == None:
+                self._head = _e.succ
+                _e.succ.pred = None
+            elif _e.succ == None:
+                self._tail = _e.pred
+                _e.pred.succ = None
+            else:
+                _e.pred.succ = _e.succ
+                _e.succ.pred = _e.pred
+            self._size -=1
+
+
+    def append(self, _e):
+        if self._size == 0:
+            _e.pred = None
+            _e.succ = None
+            self._head = _e
+            self._tail = _e
+        else:
+            self._tail.succ = _e
+            _e.pred = self._tail
+            _e.succ = None
+            self._tail = _e
+
+        self._size+=1
+
+    def size(self):
+        return self._size
+
+edge_list = _list() 
 
 def get_edge_dict():
     global edge_list
     _set = set()
-    for e in edge_list:
-        if e.twin not in _set:
-            _set.add(e)
-    edge_list = list(_set)
-    ret = {'in' : [e.origin.i for e in edge_list], 'out' : [e.nxt.origin.i for e in edge_list]}
-    return ret
+    if edge_list._size != 0:
+        _e = edge_list._head
+        while(True):
+            if _e.twin not in _set:
+                _set.add(_e)
+            _e = _e.succ
+
+            if(_e == None):
+                break
+
+
+    e_list = list(_set)
+    print("\nnumber of edges:{0} \n".format(len(e_list)))
+    return {'in' : [e.origin.i for e in e_list], 'out' : [e.nxt.origin.i for e in e_list]}
 
 
 # Edge class
@@ -127,12 +182,16 @@ class Edge:
     prev = None
     nxt = None
     twin = None
+    pred = None  # predecessor in the list
+    succ = None   #  successor in the list
 
     def __init__(self, origin=None, prev=None, nxt=None):
         self.origin=origin;
         self.prev=prev;
         self.nxt=nxt;
         self.twin=twin;
+        self.pred = None
+        self.succ = None
         edge_list.append(self)
 
     def __eq__(self, e):
