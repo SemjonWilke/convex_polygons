@@ -23,15 +23,14 @@ def ch_i(i):
 def readTestInstance(filename):
     """ reads a test instance file by name
     input:      filename as string
-    returns:    points as dictionary of lists 'x' and 'y'
+    returns:    points as array of coordinates
                 instance name as string
     """
-    points = {'x': [], 'y': []}
+    points = []
     with open(filename) as json_file:
         data = json.load(json_file)
         for p in data['points']:
-            points['x'].append(int(p['x']))
-            points['y'].append(int(p['y']))
+            points.append([int(p['x']), int(p['y'])])
             # print('%i: (%.1f | %.1f)' % (int(p['i']), float(p['x']), float(p['y'])))
         instance = data['name']
         return points, instance
@@ -84,14 +83,14 @@ def drawPoints(points, edges=None, color='r'):
     """
     degree = None
     if edges != None:
-        degree = [0]*len(points['x'])
+        degree = [0]*len(points)
         for ein in edges['in']:
             degree[ein] += 1
         for eout in edges['out']:
             degree[eout] += 1
 
-    for i,val in enumerate(points['x']):
-        plt.plot(points['x'][i], points['y'][i], col(color,degree,i)+'o')
+    for i,val in enumerate(points):
+        plt.plot(val[0], val[1], col(color,degree,i)+'o')
 
 def drawEdges(edges, points, color='b-'):
     """ draws edges to plt
@@ -103,8 +102,8 @@ def drawEdges(edges, points, color='b-'):
         i = edges['in'][index]
         j = edges['out'][index]
         plt.plot(
-            [points['x'][i], points['x'][j]],
-            [points['y'][i], points['y'][j]],
+            [points[i][0], points[j][0]],
+            [points[i][1], points[j][1]],
             color
         )
 
@@ -216,10 +215,10 @@ def getEdge(a, b):
     """ Note: will loop endlessly if a and b are not actually connected. """
     e = a.incidentEdge
     i = 0 # guard to prevent endless loop, i is at most |V| with V = E
-    while e.nxt.origin != b and i <= len(points['x']):
+    while e.nxt.origin != b and i <= len(points):
         i += 1
         e = e.twin.nxt
-    if i > len(points['x']):
+    if i > len(points):
         print("ERROR: Points (%i,%i) not connected" % (a.i, b.i))
     return e # edge e between vertices a and b
 
@@ -264,8 +263,52 @@ def iterate(v, debug):
 
 ### Main
 
-if __name__ == '__main__':
+def run(filename, debug, x=6000, y=4500):
+    global convex_hull
+    global points
+    
+    plt.rcParams["figure.figsize"] = (16,9)
+    
     start_t = time.process_time()
+    
+    points,instance = readTestInstance(filename)
+    DCEL.points = points #TODO
+
+    origin = Vertex(explicit_x=x, explicit_y=y)
+    print("Start points are (%i|%i)" % (origin.explicit_x, origin.explicit_y))
+
+    vertices = [Vertex(index=i) for i in range(len(points))]
+    sortByDistance(vertices, origin)
+
+    # Create the first triangle
+    if isLeftOf(vertices[0], vertices[1], vertices[2]):
+        convex_hull = [vertices[0], vertices[1], vertices[2]]
+        DCEL.make_triangle(vertices[0], vertices[1], vertices[2])
+    else:
+        convex_hull = [vertices[0], vertices[2], vertices[1]]
+        DCEL.make_triangle(vertices[0], vertices[2], vertices[1])
+    
+    for i in range(3, len(vertices)):
+        iterate(vertices[i], debug)
+        sys.stdout.flush()
+    
+    edges = DCEL.get_edge_dict()
+
+    snapshoot_t(start_t, "computation")
+
+    writeTestSolution(sys.argv[1],instance,edges)
+
+    start_t = time.process_time()
+
+    drawEdges(edges,points)
+    drawPoints(points,edges)
+
+    snapshoot_t(start_t, "plotting")
+    
+    plt.show()
+
+
+if __name__ == '__main__':
     if len(sys.argv) < 2:
         print("ERROR: Not enough arguments")
         usage()
@@ -282,41 +325,9 @@ if __name__ == '__main__':
     if len(sys.argv) > 2 and sys.argv[2] == "showcase":
         print("Showcase mode")
         debug = 1
-
-    plt.rcParams["figure.figsize"] = (16,9)
-    points,instance = readTestInstance(sys.argv[1])
-    DCEL.points = points
-
-    origin = Vertex(explicit_x=6500, explicit_y=4000)
+        
     if len(sys.argv) > 4:
-        origin = Vertex(explicit_x=int(sys.argv[3]), explicit_y=int(sys.argv[4]))
-    print("Start points are (%i|%i)" % (origin.explicit_x, origin.explicit_y))
-
-    vertices = [Vertex(index=i) for i in range(len(points['x']))]
-    sortByDistance(vertices, origin)
-
-    # Create the first triangle
-    if isLeftOf(vertices[0], vertices[1], vertices[2]):
-        convex_hull = [vertices[0], vertices[1], vertices[2]]
-        DCEL.make_triangle(vertices[0], vertices[1], vertices[2])
+        run(sys.argv[1], debug, sys.argv[3], sys.argv[4])
     else:
-        convex_hull = [vertices[0], vertices[2], vertices[1]]
-        DCEL.make_triangle(vertices[0], vertices[2], vertices[1])
-
-    for i in range(3, len(vertices)):
-        iterate(vertices[i], debug)
-        sys.stdout.flush()
-
-    edges = DCEL.get_edge_dict()
-
-    snapshoot_t(start_t, "computation")
-
-    writeTestSolution(sys.argv[1],instance,edges)
-
-    start_t = time.process_time()
-
-    drawEdges(edges,points)
-    drawPoints(points,edges)
-    snapshoot_t(start_t, "plotting")
+        run(sys.argv[1], debug)
     
-    plt.show()
