@@ -275,7 +275,7 @@ def iterate(v):
     update_convex_hull(i, j, v)
 
 ### Main
-def run(filename, c=(6000, 4500), overwrite=False):
+def run(filename, c=(6000, 4500), overwrite=False, plot=False):
     global convex_hull
     global points
     
@@ -299,7 +299,7 @@ def run(filename, c=(6000, 4500), overwrite=False):
     else:
         convex_hull = [vertices[0], vertices[2], vertices[1]]
         DCEL.make_triangle(vertices[0], vertices[2], vertices[1])
-    
+
     for i in range(3, len(vertices)):
         iterate(vertices[i])
         sys.stdout.flush()
@@ -309,22 +309,22 @@ def run(filename, c=(6000, 4500), overwrite=False):
     snapshoot(start_t, "Computation")
     writeTestSolution(sys.argv[1],instance,edges)
 
-    """
-    start_t = time.process_time()
-    drawEdges(edges,points)
-    drawPoints(points,edges)
-    snapshoot(start_t, "Plotting")
-    plt.show()
-    """
-    
+    if plot:
+        start_t = time.process_time()
+        drawEdges(edges,points)
+        drawPoints(points,edges)
+        snapshoot(start_t, "Plotting")
+        plt.show()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Bens Algorithm for SoCG')
     parser.add_argument('file')
     parser.add_argument('-c', '--coordinates', type=int, nargs=2, dest='coord')
     parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite')
+    parser.add_argument('-p', '--plot', action='store_true', dest='plot')
     arguments = parser.parse_args()
     
     if arguments.coord != None:
-        run(arguments.file, arguments.coord, arguments.overwrite)
+        run(arguments.file, arguments.coord, arguments.overwrite, arguments.plot)
     else:
-        run(arguments.file, overwrite=arguments.overwrite)
+        run(arguments.file, overwrite=arguments.overwrite, plot=arguments.plot)
