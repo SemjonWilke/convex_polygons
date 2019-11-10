@@ -8,8 +8,8 @@ import math
 import sys
 import DCEL
 from DCEL import Vertex
-from middleware import snapshoot_t
 import time
+import argparse
 
 convex_hull = []
 def ch(i):
@@ -33,7 +33,51 @@ def readTestInstance(filename):
             points.append([int(p['x']), int(p['y'])])
             # print('%i: (%.1f | %.1f)' % (int(p['i']), float(p['x']), float(p['y'])))
         instance = data['name']
+        json_file.close()
         return points, instance
+
+def pointdegree(edges):
+    degree = None
+    if edges != None:
+        degree = [0]*len(points)
+        for ein in edges['in']:
+            degree[ein] += 1
+        for eout in edges['out']:
+            degree[eout] += 1
+    return degree
+
+def getstats (filename, edges):
+
+    degrees = pointdegree(edges)
+
+    noclose = True
+    iteration = 0
+    edgenum = len(edges['in'])
+    degavg = sum(degrees)/len(degrees)
+    degmax = max(degrees)
+    edgenumbetter = edgenum
+    degavgov = degavg
+    degmaxov = degmax
+    try:
+        solutionfp = open(filename)
+    except:
+        print("No previous solution existing in %s" % filename)
+        noclose = False
+
+    if noclose:
+        data = json.load(solutionfp)
+        try: iteration = int(data['meta']['iteration']) + 1
+        except: pass
+        try: edgenumbetter = int(data['meta']['edges']) - edgenum
+        except: pass
+        try: degavgov = float(data['meta']['degree_avg_overall']) + degavg
+        except: pass
+        try: degmaxov = max(int(data['meta']['degree_max_overall']), degmaxov)
+        except: pass
+        solutionfp.close()
+    return { 'comment' : '', 'iteration' : str(iteration), 'edges' : str(edgenum), \
+            'degree_avg' : str(degavg), 'deg_max' : str(degmax), 'edges_better' : str(edgenumbetter), \
+            'degree_avg_overall' : str(degavgov), 'degree_max_overall' : str(degmaxov) }
 
 def writeTestSolution(filename, instance, edges=[]):
     """ writes edges to a solution file
@@ -47,9 +91,10 @@ def writeTestSolution(filename, instance, edges=[]):
     data = {
         'type':'Solution',
         'instance_name' : instance,
-        'meta' : {'comment':''},
+        'meta' : getstats(filename, edges),
         'edges' : []
     }
+
     for index,val in enumerate(edges['in']):
         data['edges'].append({
             'i': str(edges['in'][index]),
@@ -81,14 +126,7 @@ def drawPoints(points, edges=None, color='r'):
     input:      points as dictionary of lists 'x' and 'y'
                 color of points (matplotlib style)
     """
-    degree = None
-    if edges != None:
-        degree = [0]*len(points)
-        for ein in edges['in']:
-            degree[ein] += 1
-        for eout in edges['out']:
-            degree[eout] += 1
-
+    degree = pointdegree(edges)
     for i,val in enumerate(points):
         plt.plot(val[0], val[1], col(color,degree,i)+'o')
 
@@ -119,28 +157,10 @@ def drawSingleEdge(e):
 def drawSinglePoint(v):
     plt.plot(v.x(), v.y(), 'ks')
 
-def test_block(e=None, p=None):
-    edges = DCEL.get_edge_dict()
-    plt.cla()
-    drawEdges(edges,points)
-    drawPoints(points)
-    drawHull()
-    if e != None:
-        drawSingleEdge(e)
-    if p != None:
-        drawSinglePoint(p)
-    plt.draw()
-    plt.pause(0.001)
-    input("")
 
-def usage():
-    print("This program calculates solutions for SoCG contest")
-    print("usage:\npython3 presentation.py <instance> [showcase] [<x-coordinates> <y-coordinates>]")
-    print("\t<instance>\tis the filename of the instance file")
-    print("\t[showcase]\tuse this argument to start visualization mode")
-    print("\t[x-coordinates]\tof the starting point")
-    print("\t[y-coordinates]\tof the starting point")
-    sys.exit(1)
+def snapshoot(start_t, msg):
+    elp_t = time.process_time() - start_t
+    print("%s time: %02.0f:%02.0f:%2.2f h" % (msg, elp_t/3600, elp_t/60, elp_t))
 
 ### Algorithm functions
 
@@ -231,16 +251,13 @@ def update_convex_hull(i, j ,v):
     else:
         convex_hull[i+1:j] = [v]
 
-def iterate(v, debug):
+def iterate(v):
     i = getLeftMostVisibleIndex(v)
     j = i
     e = getEdge(ch(i), ch(i+1))
 
     while isVisibleEdge(e, v):
         n = e.nxt
-
-        if debug == 1:
-            test_block(e, v)
 
         top_is_convex = not isLeftOfEdge(e.twin.prev, v)
         bot_is_convex = not isLeftOfEdge(e.twin.nxt, v)
@@ -255,26 +272,21 @@ def iterate(v, debug):
         e = n
         j += 1
 
-    if debug == 1:
-            test_block(e, v)
     update_convex_hull(i, j, v)
-    if debug == 1:
-            test_block(e, v)
 
 ### Main
-
-def run(filename, debug, x=6000, y=4500):
+def run(filename, c=(6000, 4500), overwrite=False):
     global convex_hull
     global points
     
-    plt.rcParams["figure.figsize"] = (16,9)
+    #plt.rcParams["figure.figsize"] = (16,9)
     
     start_t = time.process_time()
     
     points,instance = readTestInstance(filename)
     DCEL.points = points #TODO
 
-    origin = Vertex(explicit_x=x, explicit_y=y)
+    origin = Vertex(explicit_x=c[0], explicit_y=c[1])
     print("Start points are (%i|%i)" % (origin.explicit_x, origin.explicit_y))
 
     vertices = [Vertex(index=i) for i in range(len(points))]
@@ -289,45 +301,30 @@ def run(filename, debug, x=6000, y=4500):
         DCEL.make_triangle(vertices[0], vertices[2], vertices[1])
     
     for i in range(3, len(vertices)):
-        iterate(vertices[i], debug)
+        iterate(vertices[i])
         sys.stdout.flush()
     
     edges = DCEL.get_edge_dict()
 
-    snapshoot_t(start_t, "computation")
-
+    snapshoot(start_t, "Computation")
     writeTestSolution(sys.argv[1],instance,edges)
 
+    """
     start_t = time.process_time()
-
     drawEdges(edges,points)
     drawPoints(points,edges)
-
-    snapshoot_t(start_t, "plotting")
-    
+    snapshoot(start_t, "Plotting")
     plt.show()
-
-
-if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("ERROR: Not enough arguments")
-        usage()
-    if sys.argv[1] == "help" or sys.argv[1] == "/?" or sys.argv[1] == "?" or \
-       sys.argv[1] == "--help" or sys.argv[1] == "-h":
-        usage()
-    try:
-        f = open(sys.argv[1])
-        f.close()
-    except:
-        print("ERROR: File %s does not exist" % (sys.argv[1]))
-        usage()
-    debug = 0
-    if len(sys.argv) > 2 and sys.argv[2] == "showcase":
-        print("Showcase mode")
-        debug = 1
-        
-    if len(sys.argv) > 4:
-        run(sys.argv[1], debug, sys.argv[3], sys.argv[4])
-    else:
-        run(sys.argv[1], debug)
+    """
     
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Bens Algorithm for SoCG')
+    parser.add_argument('file')
+    parser.add_argument('-c', '--coordinates', type=int, nargs=2, dest='coord')
+    parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite')
+    arguments = parser.parse_args()
+    
+    if arguments.coord != None:
+        run(arguments.file, arguments.coord, arguments.overwrite)
+    else:
+        run(arguments.file, overwrite=arguments.overwrite)
