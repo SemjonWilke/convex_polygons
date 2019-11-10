@@ -31,7 +31,6 @@ def readTestInstance(filename):
         data = json.load(json_file)
         for p in data['points']:
             points.append([int(p['x']), int(p['y'])])
-            # print('%i: (%.1f | %.1f)' % (int(p['i']), float(p['x']), float(p['y'])))
         instance = data['name']
         json_file.close()
         return points, instance
@@ -59,7 +58,7 @@ def getstats (filename, edges):
     degavgov = degavg
     degmaxov = degmax
     try:
-        solutionfp = open(filename)
+        solutionfp = open(filename, 'r')
     except:
         print("No previous solution existing in %s" % filename)
         noclose = False
@@ -79,14 +78,28 @@ def getstats (filename, edges):
             'degree_avg' : str(degavg), 'deg_max' : str(degmax), 'edges_better' : str(edgenumbetter), \
             'degree_avg_overall' : str(degavgov), 'degree_max_overall' : str(degmaxov) }
 
-def writeTestSolution(filename, instance, edges=[]):
+def writeTestSolution(filename, instance, edges=[], overwrite=True):
     """ writes edges to a solution file
     input:      filename as string
                 instance name as string
                 list of edges by indices of points
     """
     filename = "solutions/" + filename.split("/",1)[-1] # fix path
-    filename = filename.split(".",1)[0] + ".solution.json" # substitute "instance" with "solution"
+    if not overwrite:
+        i = 0
+        while True:
+            filename = filename.split(".",1)[0] + ".solution." + str(i) + ".json" # substitute "instance" with "solution"
+            try: #File instanceXXX.solution.i.json exists
+                print("TRY")
+                fp = open(filename, 'r')
+                fp.close()
+                i += 1
+            except: #File instanceXXX.solution.i.json does not exists, write to it
+                print("CATCH")
+                break
+    else:
+        print("ELSE")
+        filename = filename.split(".",1)[0] + ".solution.json" # substitute "instance" with "solution"
     
     data = {
         'type':'Solution',
@@ -99,10 +112,11 @@ def writeTestSolution(filename, instance, edges=[]):
         data['edges'].append({
             'i': str(edges['in'][index]),
             'j': str(edges['out'][index]),
+
         })
 
-    with open(filename, 'w') as outfile:
-        json.dump(data, outfile)
+    with open(filename, 'w') as json_file:
+        json.dump(data, json_file)
     print("Solution written to %s" % (filename))
 
 def col(color, degree, index):
@@ -307,7 +321,7 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False):
     edges = DCEL.get_edge_dict()
 
     snapshoot(start_t, "Computation")
-    writeTestSolution(sys.argv[1],instance,edges)
+    writeTestSolution(sys.argv[1],instance,edges,overwrite)
 
     if plot:
         start_t = time.process_time()
@@ -319,9 +333,9 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Bens Algorithm for SoCG')
     parser.add_argument('file')
-    parser.add_argument('-c', '--coordinates', type=int, nargs=2, dest='coord')
-    parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite')
-    parser.add_argument('-p', '--plot', action='store_true', dest='plot')
+    parser.add_argument('-c', '--coordinates', type=int, nargs=2, dest='coord', help='Coordinates of starting point')
+    parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite', help='Overwrite existing solution files')
+    parser.add_argument('-p', '--plot', action='store_true', dest='plot', help='Show plot')
     arguments = parser.parse_args()
     
     if arguments.coord != None:
