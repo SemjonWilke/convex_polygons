@@ -61,7 +61,7 @@ def getmeta(filename, edges, coord):
     try:
         solutionfp = open(filename, 'r')
     except:
-        print("No previous solution existing in %s" % filename)
+        if verbose: print("No previous solution existing in %s" % filename)
         noclose = False
 
     if noclose:
@@ -91,7 +91,7 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False):
     filename = filename.split(".",1)[0] + ".solution.json" # substitute "instance" with "solution"
     meta = getmeta(filename, edges, coord)
     better = int(meta['edges_better'])
-    
+
     fexist = True
     try:
         fp = open(filename, 'r')
@@ -100,8 +100,8 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False):
         fexist = False
 
     if better > 0: # overwrite if its better else discard
-        print("Found a stronger solution by %s edges" % better)
-    
+        if verbose: print("Found a stronger solution by %s edges" % better)
+
     data = {
         'type':'Solution',
         'instance_name' : instance,
@@ -118,9 +118,9 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False):
     if not fexist or (fexist and better > 0 and overwrite):
         with open(filename, 'w') as json_file:
             json.dump(data, json_file)
-        print("Solution written to %s" % (filename))
+        if verbose: print("Solution written to %s" % (filename))
     if fexist and better <= 0:
-        print("Solution was weaker by %s edges" % abs(better))
+        if verbose: print("Solution was weaker by %s edges" % abs(better))
 
 def col(color, degree, index):
     if degree == None:
@@ -177,14 +177,14 @@ def drawSinglePoint(v):
 def randomstart(seed=None):
     random.seed(seed, 2)
     if seed != None:
-        print("Fixed seed is: %s" % str(seed))
+        if verbose: print("Fixed seed is: %s" % str(seed))
     xmin,ymin = min([p[0] for p in points]),min([p[1] for p in points])
     xmax,ymax = max([p[0] for p in points]),max([p[1] for p in points])
     return (random.randint(ymin, ymax), random.randint(xmin, xmax))
 
 def snapshoot(start_t, msg):
     elp_t = time.process_time() - start_t
-    print("%s time: %02.0f:%02.0f:%2.2f h" % (msg, elp_t/3600, elp_t/60, elp_t))
+    if verbose: print("%s time: %02.0f:%02.0f:%2.2f h" % (msg, elp_t/3600, elp_t/60, elp_t))
 
 ### Algorithm functions
 
@@ -231,7 +231,7 @@ def getSomeVisibleSegment(v):
     if isVisible(max - 1, v):
         return max - 1
     if not isVisible(max, v):
-        print("ERROR: NON-VISIBLE-EDGE! Falling back to iterative result.")
+        if verbose: print("INFO: NON-VISIBLE-EDGE! Falling back to iterative result.")
         for i in range(len(convex_hull)):
             if isVisible(i, v):
                 return i
@@ -246,9 +246,7 @@ def getLeftMostVisibleIndex(v):
 
 # Inserted
 def get_distance(v1, v2):
-    
     return (v2.x() - v1.x())**2 + ( v2.y() - v1.y())**2
-
 
 # Overwritten
 def sortByDistance(vlist, p):
@@ -256,14 +254,13 @@ def sortByDistance(vlist, p):
     vlist.sort(key=lambda x: get_distance(x, p))
 
 def getEdge(a, b):
-    """ Note: will loop endlessly if a and b are not actually connected. """
     e = a.incidentEdge
     i = 0 # guard to prevent endless loop, i is at most |V| with V = E
     while e.nxt.origin != b and i <= len(points):
         i += 1
         e = e.twin.nxt
     if i > len(points):
-        print("ERROR: Points (%i,%i) not connected" % (a.i, b.i))
+        if verbose: print("INFO: Points (%i,%i) not connected" % (a.i, b.i))
     return e # edge e between vertices a and b
 
 def update_convex_hull(i, j ,v):
@@ -302,14 +299,15 @@ def iterate(v):
 def run(filename, c=(6000, 4500), overwrite=False, plot=False):
     global convex_hull
     global points
-    
-    #plt.rcParams["figure.figsize"] = (16,9)
-    
+
+    if plot:
+        plt.rcParams["figure.figsize"] = (16,9)
+
     start_t = time.process_time()
-    DCEL.points = points #TODO
+    DCEL.points = points
 
     origin = Vertex(explicit_x=c[0], explicit_y=c[1])
-    print("Start points are (%i|%i)" % (origin.explicit_x, origin.explicit_y))
+    if verbose: print("Start points are (%i|%i)" % (origin.explicit_x, origin.explicit_y))
 
     vertices = [Vertex(index=i) for i in range(len(points))]
     sortByDistance(vertices, origin)
@@ -325,8 +323,8 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False):
     for i in range(3, len(vertices)):
         iterate(vertices[i])
         sys.stdout.flush()
-    
-    edges = DCEL.get_edge_dict()
+
+    edges = DCEL.get_edge_dict(verbose)
 
     snapshoot(start_t, "Computation")
     writeTestSolution(sys.argv[1],instance,c,edges,overwrite)
@@ -346,10 +344,11 @@ if __name__ == '__main__':
     group.add_argument('-r', '--random', nargs='?', default=0, dest='rndm', help='Use random starting point with optional seed')
     parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite', help='Overwrite existing solution if better')
     parser.add_argument('-p', '--plot', action='store_true', dest='plot', help='Show plot')
+    parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help='Print human readable information')
     arguments = parser.parse_args()
 
+    verbose = arguments.verbose
     points,instance = readTestInstance(arguments.file)
-    
     if arguments.coord != None:
         run(arguments.file, arguments.coord, arguments.overwrite, arguments.plot)
     else:

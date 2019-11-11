@@ -155,9 +155,9 @@ class _list:
     def size(self):
         return self._size
 
-edge_list = _list() 
+edge_list = _list()
 
-def get_edge_dict():
+def get_edge_dict(verbose):
     global edge_list
     _set = set()
     if edge_list._size != 0:
@@ -172,7 +172,7 @@ def get_edge_dict():
 
 
     e_list = list(_set)
-    print("\nnumber of edges:{0} \n".format(len(e_list)))
+    if verbose: print("number of edges: %i" % (len(e_list)))
     return {'in' : [e.origin.i for e in e_list], 'out' : [e.nxt.origin.i for e in e_list]}
 
 
