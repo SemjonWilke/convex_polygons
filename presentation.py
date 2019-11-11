@@ -3,6 +3,7 @@ Software project for the Computational Geometry Week 2020 competition
 """
 
 import matplotlib.pyplot as plt
+import random
 import json
 import math
 import sys
@@ -45,7 +46,7 @@ def pointdegree(edges):
             degree[eout] += 1
     return degree
 
-def getstats (filename, edges):
+def getmeta(filename, edges, coord):
 
     degrees = pointdegree(edges)
 
@@ -54,7 +55,7 @@ def getstats (filename, edges):
     edgenum = len(edges['in'])
     degavg = sum(degrees)/len(degrees)
     degmax = max(degrees)
-    edgenumbetter = edgenum
+    edgenumbetter = 0
     degavgov = degavg
     degmaxov = degmax
     try:
@@ -74,50 +75,52 @@ def getstats (filename, edges):
         try: degmaxov = max(int(data['meta']['degree_max_overall']), degmaxov)
         except: pass
         solutionfp.close()
-    return { 'comment' : '', 'iteration' : str(iteration), 'edges' : str(edgenum), \
+    return { 'comment' : '', 'iteration' : str(iteration), 'coordinates' : str(coord), 'edges' : str(edgenum), \
             'degree_avg' : str(degavg), 'deg_max' : str(degmax), 'edges_better' : str(edgenumbetter), \
             'degree_avg_overall' : str(degavgov), 'degree_max_overall' : str(degmaxov) }
 
-def writeTestSolution(filename, instance, edges=[], overwrite=True):
+def writeTestSolution(filename, instance, coord, edges=[], overwrite=False):
     """ writes edges to a solution file
     input:      filename as string
                 instance name as string
                 list of edges by indices of points
     """
+
+
     filename = "solutions/" + filename.split("/",1)[-1] # fix path
-    if not overwrite:
-        i = 0
-        while True:
-            filename = filename.split(".",1)[0] + ".solution." + str(i) + ".json" # substitute "instance" with "solution"
-            try: #File instanceXXX.solution.i.json exists
-                print("TRY")
-                fp = open(filename, 'r')
-                fp.close()
-                i += 1
-            except: #File instanceXXX.solution.i.json does not exists, write to it
-                print("CATCH")
-                break
-    else:
-        print("ELSE")
-        filename = filename.split(".",1)[0] + ".solution.json" # substitute "instance" with "solution"
+    filename = filename.split(".",1)[0] + ".solution.json" # substitute "instance" with "solution"
+    meta = getmeta(filename, edges, coord)
+    better = int(meta['edges_better'])
+    
+    fexist = True
+    try:
+        fp = open(filename, 'r')
+        fp.close()
+    except:
+        fexist = False
+
+    if better > 0: # overwrite if its better else discard
+        print("Found a stronger solution by %s edges" % better)
     
     data = {
         'type':'Solution',
         'instance_name' : instance,
-        'meta' : getstats(filename, edges),
+        'meta' : meta,
         'edges' : []
     }
 
     for index,val in enumerate(edges['in']):
         data['edges'].append({
             'i': str(edges['in'][index]),
-            'j': str(edges['out'][index]),
+            'j': str(edges['out'][index]),}
+        )
 
-        })
-
-    with open(filename, 'w') as json_file:
-        json.dump(data, json_file)
-    print("Solution written to %s" % (filename))
+    if not fexist or (fexist and better > 0 and overwrite):
+        with open(filename, 'w') as json_file:
+            json.dump(data, json_file)
+        print("Solution written to %s" % (filename))
+    if fexist and better <= 0:
+        print("Solution was weaker by %s edges" % abs(better))
 
 def col(color, degree, index):
     if degree == None:
@@ -171,6 +174,13 @@ def drawSingleEdge(e):
 def drawSinglePoint(v):
     plt.plot(v.x(), v.y(), 'ks')
 
+def randomstart(seed=None):
+    random.seed(seed, 2)
+    if seed != None:
+        print("Fixed seed is: %s" % str(seed))
+    xmin,ymin = min([p[0] for p in points]),min([p[1] for p in points])
+    xmax,ymax = max([p[0] for p in points]),max([p[1] for p in points])
+    return (random.randint(ymin, ymax), random.randint(xmin, xmax))
 
 def snapshoot(start_t, msg):
     elp_t = time.process_time() - start_t
@@ -296,8 +306,6 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False):
     #plt.rcParams["figure.figsize"] = (16,9)
     
     start_t = time.process_time()
-    
-    points,instance = readTestInstance(filename)
     DCEL.points = points #TODO
 
     origin = Vertex(explicit_x=c[0], explicit_y=c[1])
@@ -321,7 +329,7 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False):
     edges = DCEL.get_edge_dict()
 
     snapshoot(start_t, "Computation")
-    writeTestSolution(sys.argv[1],instance,edges,overwrite)
+    writeTestSolution(sys.argv[1],instance,c,edges,overwrite)
 
     if plot:
         start_t = time.process_time()
@@ -333,12 +341,16 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Bens Algorithm for SoCG')
     parser.add_argument('file')
-    parser.add_argument('-c', '--coordinates', type=int, nargs=2, dest='coord', help='Coordinates of starting point')
-    parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite', help='Overwrite existing solution files')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-c', '--coordinates', type=int, nargs=2, dest='coord', help='Coordinates of starting point')
+    group.add_argument('-r', '--random', nargs='?', default=0, dest='rndm', help='Use random starting point with optional seed')
+    parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite', help='Overwrite existing solution if better')
     parser.add_argument('-p', '--plot', action='store_true', dest='plot', help='Show plot')
     arguments = parser.parse_args()
+
+    points,instance = readTestInstance(arguments.file)
     
     if arguments.coord != None:
         run(arguments.file, arguments.coord, arguments.overwrite, arguments.plot)
     else:
-        run(arguments.file, overwrite=arguments.overwrite, plot=arguments.plot)
+        run(arguments.file, randomstart(arguments.rndm), arguments.overwrite, arguments.plot)
