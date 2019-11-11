@@ -1,5 +1,11 @@
 #!/bin/bash
 
-#repeat until stopped and iterate over i (as seed):
-#   for each file fp in instances/*/ do:
-#       execute "python3 presentation.py instances/*/fp -r i -o"
+COUNTER = 0;
+while [ 1 ] ; do
+    COUNTER=$[COUNTER +1]
+    echo $COUNTER
+    for f in instances/*/*.instance.json ; do
+        python3 presentation.py -r $COUNTER -o $f;
+        echo -en "\r\b\b$f"
+    done;
+done;
