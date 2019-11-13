@@ -7,6 +7,7 @@ import random
 import json
 import math
 import sys
+import signal
 import DCEL
 from DCEL import Vertex
 import time
@@ -86,7 +87,6 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False):
                 list of edges by indices of points
     """
 
-
     filename = "solutions/" + filename.split("/",1)[-1] # fix path
     filename = filename.split(".",1)[0] + ".solution.json" # substitute "instance" with "solution"
     meta = getmeta(filename, edges, coord)
@@ -119,8 +119,10 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False):
         with open(filename, 'w') as json_file:
             json.dump(data, json_file)
         if verbose: print("Solution written to %s" % (filename))
+        return 0
     if fexist and better <= 0:
         if verbose: print("Solution was weaker by %s edges" % abs(better))
+        return 1
 
 def col(color, degree, index):
     if degree == None:
@@ -296,6 +298,10 @@ def iterate(v):
     update_convex_hull(i, j, v)
 
 ### Main
+def exithandler(sig, frame):
+    print('Exiting')
+    exit(3)
+
 def run(filename, c=(6000, 4500), overwrite=False, plot=False):
     global convex_hull
     global points
@@ -327,7 +333,7 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False):
     edges = DCEL.get_edge_dict(verbose)
 
     snapshoot(start_t, "Computation")
-    writeTestSolution(sys.argv[1],instance,c,edges,overwrite)
+    written = writeTestSolution(sys.argv[1],instance,c,edges,overwrite)
 
     if plot:
         start_t = time.process_time()
@@ -335,21 +341,28 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False):
         drawPoints(points,edges)
         snapshoot(start_t, "Plotting")
         plt.show()
+    return written
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Bens Algorithm for SoCG')
-    parser.add_argument('file')
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('-c', '--coordinates', type=int, nargs=2, dest='coord', help='Coordinates of starting point')
-    group.add_argument('-r', '--random', nargs='?', default=0, dest='rndm', help='Use random starting point with optional seed')
-    parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite', help='Overwrite existing solution if better')
-    parser.add_argument('-p', '--plot', action='store_true', dest='plot', help='Show plot')
-    parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help='Print human readable information')
-    arguments = parser.parse_args()
+    signal.signal(signal.SIGINT, exithandler)
+    try:
+        parser = argparse.ArgumentParser(description='Bens Algorithm for SoCG')
+        parser.add_argument('file')
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument('-c', '--coordinates', type=int, nargs=2, dest='coord', help='Coordinates of starting point')
+        group.add_argument('-r', '--random', nargs='?', default=0, dest='rndm', help='Use random starting point with optional seed')
+        parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite', help='Overwrite existing solution if better')
+        parser.add_argument('-p', '--plot', action='store_true', dest='plot', help='Show plot')
+        parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help='Print human readable information')
+        arguments = parser.parse_args()
 
-    verbose = arguments.verbose
-    points,instance = readTestInstance(arguments.file)
-    if arguments.coord != None:
-        run(arguments.file, arguments.coord, arguments.overwrite, arguments.plot)
-    else:
-        run(arguments.file, randomstart(arguments.rndm), arguments.overwrite, arguments.plot)
+        verbose = arguments.verbose
+        points,instance = readTestInstance(arguments.file)
+        if arguments.coord != None:
+            exitcode = run(arguments.file, arguments.coord, arguments.overwrite, arguments.plot)
+        else:
+            exitcode = run(arguments.file, randomstart(arguments.rndm), arguments.overwrite, arguments.plot)
+        if exitcode != 0:
+            exit(exitcode)
+    except KeyboardInterrupt:
+        exit(3)
