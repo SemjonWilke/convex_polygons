@@ -170,10 +170,10 @@ def get_edge_dict(verbose):
             if(_e == None):
                 break
 
-
-    e_list = list(_set)
-    if verbose: print("number of edges: %i" % (len(e_list)))
-    return {'in' : [e.origin.i for e in e_list], 'out' : [e.nxt.origin.i for e in e_list]}
+        e_list = list(_set)
+        if verbose: print("number of edges: %i" % (len(e_list)))
+        return {'in' : [e.origin.i for e in e_list], 'out' : [e.nxt.origin.i for e in e_list]}
+    return dict()
 
 
 # Edge class
@@ -245,6 +245,42 @@ def make_triangle(a, b, c):
     twin(a.incidentEdge, a.incidentEdge.twin)
     twin(b.incidentEdge, b.incidentEdge.twin)
     twin(c.incidentEdge, c.incidentEdge.twin)
+
+
+
+def make_hull(vertices, inds):
+    if len(inds) == 1:
+            return
+    if len(inds) == 2:
+        vertices[inds[0]].incidentEdge = Edge(vertices[inds[0]], None, None)
+        vertices[inds[1]].incidentEdge = Edge(vertices[inds[1]], None, None)
+        twin(vertices[inds[0]].incidentEdge, vertices[inds[1]].incidentEdge)
+        chain(vertices[inds[0]].incidentEdge, vertices[inds[1]].incidentEdge)
+        chain(vertices[inds[1]].incidentEdge, vertices[inds[0]].incidentEdge)
+        return
+    j = None
+    k = None
+    for i in range(len(inds)):
+        vertices[inds[i]].incidentEdge = Edge(vertices[inds[i]], None, None)
+        if i == len(inds)-1:
+            j = 0
+        else:
+            j = i +1
+        vertices[inds[i]].incidentEdge.twin = Edge(vertices[inds[j]], None, None)
+        twin(vertices[inds[i]].incidentEdge, vertices[inds[i]].incidentEdge.twin)
+    for i in range(len(inds)):
+        if i == len(inds)-1:
+            j = 0
+        else:
+            j = i +1
+        if i == 0:
+            k = len(inds)-1
+        else:
+            k = i -1
+        chain(vertices[inds[i]].incidentEdge, vertices[inds[j]].incidentEdge)
+        chain(vertices[inds[i]].incidentEdge.twin, vertices[inds[k]].incidentEdge.twin)
+
+
 
 """
 #Testing
