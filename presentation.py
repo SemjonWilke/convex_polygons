@@ -170,10 +170,11 @@ def drawHull():
     for i in range(len(convex_hull)):
         plt.plot([ch(i).x(), ch(i+1).x()], [ch(i).y(), ch(i+1).y()], 'r-')
 
-def drawSingleEdge(e):
-    plt.plot([e.origin.x(), e.nxt.origin.x()], [e.origin.y(), e.nxt.origin.y()], 'g-')
-    plt.plot(e.origin.x(), e.origin.y(), 'bo')
-    plt.plot(e.nxt.origin.x(), e.nxt.origin.y(), 'yo')
+def drawSingleEdge(e, color='b'):
+    plt.plot([e.origin.x(), e.nxt.origin.x()], [e.origin.y(), e.nxt.origin.y()], color+'-')
+
+def drawSingleHEdge(inp, outp, color='b'):
+    plt.plot([points[inp][0], points[outp][0]], [points[inp][1], points[outp][1]], color+'-')
 
 def drawSinglePoint(v):
     plt.plot(v.x(), v.y(), 'ks')
@@ -302,27 +303,29 @@ def iterate(v):
 
 
 
-#  the second approach 
+#  the second approach
 # ======================================================================
-upper_hull = list() 
-lower_hull = list()  
+upper_hull = list()
+lower_hull = list()
 indices = list()
 conv_hulls = list()
 vertices = list()
 
 def v2nd_isLeftOf(a, b, v):
     return ((b[0] - a[0])*(v[1] - a[1]) - (b[1] - a[1])*(v[0] - a[0])) >= 0.0
+
 def sort_by_Xcoord():
     global points
     assert(len(points)>2)
     points.sort(key = lambda p: p[0] )
+
 def g_lower_hull():
     global lower_hull, points, indices
     lower_hull.clear()
     if(len(indices) < 3 ):
         lower_hull= indices[:]
         return
-    lower_hull.append(indices[-1] ) 
+    lower_hull.append(indices[-1] )
     lower_hull.append(indices[-2] )
     for i in range(len(indices) - 3, -1, -1):
         while( not v2nd_isLeftOf(points[lower_hull[-1]], points[lower_hull[-2]], points[indices[i]]) ):
@@ -372,7 +375,7 @@ def update_inner_inds(f_in, l_in, inner_hull):
         f_in = l_in
         if l_in == len(conv_hulls[inner_hull])-1:
             l_in = 0
-        else: 
+        else:
             l_in +=1
     return f_in, l_in
 
@@ -413,7 +416,7 @@ def connect_2_hulls(inner_hull, outer_hull):
                         points[conv_hulls[outer_hull][_h]]):
                     _h-=1
                 vertices[conv_hulls[outer_hull][_h+1]].connect_to(vertices[conv_hulls[inner_hull][0]])
-                vertices[conv_hulls[outer_hull][_h]].connect_to(vertices[conv_hulls[inner_hull][0]]) 
+                vertices[conv_hulls[outer_hull][_h]].connect_to(vertices[conv_hulls[inner_hull][0]])
     else:
         _l = g_lower_most_right(outer_hull, inner_hull)
         f_in = 0
@@ -426,14 +429,14 @@ def connect_2_hulls(inner_hull, outer_hull):
         if len(conv_hulls[inner_hull]) != 2:
             att_in = conv_hulls[inner_hull].pop()
 
-        while True: 
+        while True:
             if v2nd_isLeftOf(points[conv_hulls[inner_hull][f_in]],
-                        points[conv_hulls[inner_hull][l_in]], 
+                        points[conv_hulls[inner_hull][l_in]],
                         points[conv_hulls[outer_hull][f_out]]):
                 while v2nd_isLeftOf(points[conv_hulls[inner_hull][f_in]],
-                        points[conv_hulls[inner_hull][l_in]], 
+                        points[conv_hulls[inner_hull][l_in]],
                         points[conv_hulls[outer_hull][l_out]]):
-                    f_out, l_out = update_outer_inds(f_out, l_out, outer_hull) 
+                    f_out, l_out = update_outer_inds(f_out, l_out, outer_hull)
                 if check_tracker(l_in, f_out, inner_hull, outer_hull, tracker):
                     break
                 f_in, l_in = update_inner_inds(f_in, l_in, inner_hull)
@@ -453,7 +456,7 @@ def construct_hulls():
             DCEL.make_hull(vertices, conv_hulls[ch])
             conv_hulls[ch].append(keeper)
         else: DCEL.make_hull(vertices, conv_hulls[ch])
-        
+
 def depth_search():
     global conv_hulls
     if len(conv_hulls) < 2:
@@ -465,8 +468,8 @@ def depth_search():
             _e = vertices[conv_hulls[i][v]].incidentEdge
             if v2nd_isLeftOf(points[_e.prev.origin.i],
                     points[_e.twin.nxt.twin.origin.i],
-                    points[conv_hulls[i][v]]) and v2nd_isLeftOf(points[_e.twin.prev.origin.i], 
-                    points[_e.nxt.twin.origin.i], 
+                    points[conv_hulls[i][v]]) and v2nd_isLeftOf(points[_e.twin.prev.origin.i],
+                    points[_e.nxt.twin.origin.i],
                     points[_e.twin.origin.i]):
                 _e.remove()
 
@@ -508,7 +511,7 @@ def exithandler(sig, frame):
     print('Exiting')
     exit(3)
 
-def run(filename, c=(6000, 4500), overwrite=False, plot=False):
+def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm=False):
     global convex_hull, points, indices, vertices
 
     if plot:
@@ -518,36 +521,34 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False):
     DCEL.points = points
     vertices = [Vertex(index=i) for i in range(len(points))]
 
-    
+
     '''make sure that only one approach is active when running the program, as they have different terms of sorting'''
-    # ###----------------------------------------------------------------------------------------first approach
-    # origin = Vertex(explicit_x=c[0], explicit_y=c[1])
-    # if verbose: print("Start points are (%i|%i)" % (origin.explicit_x, origin.explicit_y))
+    if algorithm: #first approach
+        if verbose: print("Bens Algorithm")
+        origin = Vertex(explicit_x=c[0], explicit_y=c[1])
+        if verbose: print("Start points are (%i|%i)" % (origin.explicit_x, origin.explicit_y))
 
-    # sortByDistance(vertices, origin)
+        sortByDistance(vertices, origin)
 
-    # ## Create the first triangle
-    # if isLeftOf(vertices[0], vertices[1], vertices[2]):
-    #     convex_hull = [vertices[0], vertices[1], vertices[2]]
-    #     DCEL.make_triangle(vertices[0], vertices[1], vertices[2])
-    # else:
-    #     convex_hull = [vertices[0], vertices[2], vertices[1]]
-    #     DCEL.make_triangle(vertices[0], vertices[2], vertices[1])
+        # Create the first triangle
+        if isLeftOf(vertices[0], vertices[1], vertices[2]):
+            convex_hull = [vertices[0], vertices[1], vertices[2]]
+            DCEL.make_triangle(vertices[0], vertices[1], vertices[2])
+        else:
+            convex_hull = [vertices[0], vertices[2], vertices[1]]
+            DCEL.make_triangle(vertices[0], vertices[2], vertices[1])
 
-    # for i in range(3, len(vertices)):
-    #     iterate(vertices[i])
-    #     sys.stdout.flush()
-    
-    
-    ###--------------------------------------------------------------------------------------second approach
-    sort_by_Xcoord()
-    indices = [i for i in range(len(points))]
-    build_mesh()
+        for i in range(3, len(vertices)):
+            iterate(vertices[i])
+            sys.stdout.flush()
+
+    else: #second approach
+        if verbose: print("Abbas' Algorithm")
+        sort_by_Xcoord()
+        indices = [i for i in range(len(points))]
+        build_mesh()
     ###------------------------------------------------------------------------
 
-    
-    
-    
     edges = DCEL.get_edge_dict(verbose)
     snapshoot(start_t, "Computation")
 
@@ -558,6 +559,13 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False):
     if plot:
         start_t = time.process_time()
         drawEdges(edges,points)
+        if not algorithm:
+            for index,conv in enumerate(conv_hulls):
+                for i in range(len(conv)-1):
+                    color=["m","r","g"]
+                    #drawSingleHEdge(conv[i], conv[i+1], color[index % 3])
+                    #TODO change SingleHEdge to use DCEL.Edge lkasd
+                    #TODO plot only if edge lkasd exists
         drawPoints(points,edges)
         snapshoot(start_t, "Plotting")
         plt.show()
@@ -574,14 +582,17 @@ if __name__ == '__main__':
         parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite', help='Overwrite existing solution if better')
         parser.add_argument('-p', '--plot', action='store_true', dest='plot', help='Show plot')
         parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help='Print human readable information')
+        parser.add_argument('-a', '--algorithm', action='store_true', dest='algorithm', help='choose algorithm to execute')
         arguments = parser.parse_args()
 
         verbose = arguments.verbose
         points,instance = readTestInstance(arguments.file)
         if arguments.coord != None:
-            exitcode = run(arguments.file, arguments.coord, arguments.overwrite, arguments.plot)
+            exitcode = run(arguments.file, arguments.coord, arguments.overwrite, \
+                            arguments.plot, arguments.algorithm)
         else:
-            exitcode = run(arguments.file, randomstart(arguments.rndm), arguments.overwrite, arguments.plot)
+            exitcode = run(arguments.file, randomstart(arguments.rndm), arguments.overwrite, \
+                            arguments.plot, arguments.algorithm)
         if exitcode != 0:
             exit(exitcode)
     except KeyboardInterrupt:
