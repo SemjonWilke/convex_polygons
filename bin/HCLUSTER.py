@@ -3,7 +3,12 @@ import argparse
 import json
 import sys
 import scipy
+import math
+import random
 from scipy.spatial import distance
+from sklearn.cluster import KMeans
+
+import HCOMMON
 
 points = []
 
@@ -48,15 +53,33 @@ def map(num, sense):
                 #print("min[%d]/avg[%d] = %4.1f%%" % (m[i][j][1], m[i][j][2], ex))
                 plt.plot(v[0], v[1], "rP")
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('file')
-    parser.add_argument('-n', '--num', type=int, default=10, nargs=1, dest='num')
-    parser.add_argument('-s', '--sense', type=int, default=12, nargs=1, dest='sense')
-    arguments = parser.parse_args()
-    readInstance(arguments.file)
-    for p in points:
-        plt.plot(p[0], p[1], "b.")
-    map(arguments.num[0], arguments.sense)
-    plt.show()
-    
+def findClusterCenters(points, retr=12, plot=False, verbose=False):
+    kmeans = None
+    kcol = []
+    start_t = HCOMMON.snaptime()
+
+    if verbose: print("find clusters with kmeans")
+    wcss = []
+    ceiling = min(100, round(len(points)/2))
+    for k in range(0, ceiling):
+        prev = kmeans
+        kmeans = KMeans(n_clusters=k+1, n_init=retr, n_jobs=4, random_state=0).fit(points)
+        if k == 0:
+            wcstart = kmeans.inertia_
+        wcss.append(kmeans.inertia_ / wcstart)
+        if k > 0 and plot:
+            if verbose: print("\rkmeans k = %d of %d" % (k, ceiling), end='')
+            wp = (wcss[k] - wcss[k-1], k - (k-1)) # vektor verschieben nach 0,0
+            phi = math.degrees(math.atan(wp[0]/wp[1]))
+            for c in kmeans.cluster_centers_: #TODO: send colors and plot to HVIS
+                col = hex(random.randint(10,16777215)).split('x')[1]
+                while len(col) < 6:
+                    col = '0'+col
+                col ='#'+col
+                kcol.append(col)
+                #axs[1].plot([k,k-1], [wcss[k],wcss[k-1]], color=col, linestyle='-') TODO plot in HVIS only
+            if wcss[k] < 0.10:
+                kmeans = prev
+                if verbose: print("")
+                return
+    HCOMMON.snapshoot(start_t, 'clustering', verbose) #TODO import HCOMMON

@@ -1,23 +1,20 @@
 """@package docstring
 Software project for the Computational Geometry Week 2020 competition
 """
-
-import matplotlib.pyplot as plt
-import matplotlib.colors
-import random
-import json
-import math
 import sys
 import signal
-import DCEL
-from DCEL import Vertex
-import time
 import argparse
+import math
 from collections import defaultdict
-from sklearn.cluster import KMeans
 
-kmeans = None
-kcol =[]
+sys.path.append('./bin')
+import HCLUSTER
+import HCOMMON
+import HDCEL
+import HJSON
+import HVIS
+
+### Algorithm functions
 
 convex_hull = []
 def ch(i):
@@ -26,220 +23,12 @@ def ch(i):
 def ch_i(i):
     return i % len(convex_hull)
 
-### Helper Functions
-
-def readTestInstance(filename):
-    """ reads a test instance file by name
-    input:      filename as string
-    returns:    points as array of coordinates
-                instance name as string
-    """
-    points = []
-    with open(filename) as json_file:
-        data = json.load(json_file)
-        for p in data['points']:
-            points.append([int(p['x']), int(p['y'])]) # TODO does not work for float
-        instance = data['name']
-        json_file.close()
-        return points, instance
-
-def pointdegree(edges):
-    degree = None
-    if edges != None:
-        degree = [0]*len(points)
-        for ein in edges['in']:
-            degree[ein] += 1
-        for eout in edges['out']:
-            degree[eout] += 1
-    return degree
-
-def getmeta(filename, edges, coord):
-
-    degrees = pointdegree(edges)
-
-    noclose = True
-    iteration = 0
-    edgenum = len(edges['in'])
-    degavg = sum(degrees)/len(degrees)
-    degmax = max(degrees)
-    edgenumbetter = 0
-    degavgov = degavg
-    degmaxov = degmax
-    try:
-        solutionfp = open(filename, 'r')
-    except:
-        if verbose: print("No previous solution existing in %s" % filename)
-        noclose = False
-
-    if noclose:
-        data = json.load(solutionfp)
-        try: iteration = int(data['meta']['iteration']) + 1
-        except: pass
-        try: edgenumbetter = int(data['meta']['edges']) - edgenum
-        except: pass
-        try: degavgov = float(data['meta']['degree_avg_overall']) + degavg
-        except: pass
-        try: degmaxov = max(int(data['meta']['degree_max_overall']), degmaxov)
-        except: pass
-        solutionfp.close()
-    return { 'comment' : '', 'iteration' : str(iteration), 'coordinates' : str(coord), 'edges' : str(edgenum), \
-            'degree_avg' : str(degavg), 'deg_max' : str(degmax), 'edges_better' : str(edgenumbetter), \
-            'degree_avg_overall' : str(degavgov), 'degree_max_overall' : str(degmaxov) }
-
-def writeTestSolution(filename, instance, coord, edges=[], overwrite=False):
-    """ writes edges to a solution file
-    input:      filename as string
-                instance name as string
-                list of edges by indices of points
-    """
-
-    filename = "solutions/" + filename.split("/",1)[-1] # fix path
-    filename = filename.split(".",1)[0] + ".solution.json" # substitute "instance" with "solution"
-    meta = getmeta(filename, edges, coord)
-    better = int(meta['edges_better'])
-
-    fexist = True
-    try:
-        fp = open(filename, 'r')
-        fp.close()
-    except:
-        fexist = False
-
-    if better > 0: # overwrite if its better else discard
-        if verbose: print("Found a stronger solution by %s edges" % better)
-
-    data = {
-        'type':'Solution',
-        'instance_name' : instance,
-        'meta' : meta,
-        'edges' : []
-    }
-
-    for index,val in enumerate(edges['in']):
-        data['edges'].append({
-            'i': str(edges['in'][index]),
-            'j': str(edges['out'][index]),}
-        )
-
-    if not fexist or (fexist and better > 0 and overwrite):
-        with open(filename, 'w') as json_file:
-            json.dump(data, json_file)
-        if verbose: print("Solution written to %s" % (filename))
-        return 0
-    if fexist and better <= 0:
-        if verbose: print("Solution was weaker by %s edges" % abs(better))
-        return 1
-
-def col(color, degree, point, index):
-    if kmeans != None:
-        return kcol[kmeans.predict([point])[0]]
-    if degree == None:
-        return color
-    if degree[index] == 0 or degree[index] == 1:
-        return 'w' #white
-    if degree[index] == 2:
-        return 'g' #green
-    if degree[index] == 3:
-        return 'y' #yellow
-    if degree[index] >= 4:
-    #    return 'c' #cyan
-    #if degree[index] == 5:
-    #    return 'm' #magenta
-    #if degree[index] >= 6:
-        return 'r' #red
-
-def drawPoints(points, edges=None, color='r'):
-    """ draws points to plt
-    input:      points as dictionary of lists 'x' and 'y'
-                color of points (matplotlib style)
-    """
-    degree = pointdegree(edges)
-    for i,val in enumerate(points):
-        axs[0].plot(val[0], val[1], color=col(color,degree,val,i), marker='o')
-    if kmeans != None:
-        for i,c in enumerate(kmeans.cluster_centers_):
-            axs[0].plot(c[0], c[1], color='k', marker='o')
-            axs[0].plot(c[0], c[1], color=kcol[i], marker='P')
-
-def drawEdges(edges, points, color='b-'):
-    """ draws edges to plt
-    input:      list of edges indexing points
-                points as dictionary of lists 'x' and 'y'
-                color of edges (matplotlib style)
-    """
-    if kmeans == None:
-        for index,val in enumerate(edges['in']):
-            i = edges['in'][index]
-            j = edges['out'][index]
-            axs[0].plot(
-                [points[i][0], points[j][0]],
-                [points[i][1], points[j][1]],
-                color
-            )
-
-def drawHull():
-    for i in range(len(convex_hull)):
-        axs[0].plot([ch(i).x(), ch(i+1).x()], [ch(i).y(), ch(i+1).y()], 'r-')
-
-def drawSingleEdge(e, color='b'):
-    axs[0].plot([e.origin.x(), e.nxt.origin.x()], [e.origin.y(), e.nxt.origin.y()], color+'-')
-
-def drawSingleHEdge(inp, outp, color='b'):
-    axs[0].plot([points[inp][0], points[outp][0]], [points[inp][1], points[outp][1]], color+'-')
-
-def drawSinglePoint(v):
-    axs[0].plot(v.x(), v.y(), 'ks')
-
-def randomstart(seed=None):
-    random.seed(seed, 2)
-    if seed != None:
-        if verbose: print("Fixed seed is: %s" % str(seed))
-    xmin,ymin = min([p[0] for p in points]),min([p[1] for p in points])
-    xmax,ymax = max([p[0] for p in points]),max([p[1] for p in points])
-    return (random.randint(ymin, ymax), random.randint(xmin, xmax))
-
-def snapshoot(start_t, msg):
-    elp_t = time.process_time() - start_t
-    if verbose: print("%s time: %02.0f:%02.0f:%2.2f h" % (msg, elp_t/3600, elp_t/60, elp_t))
-
-def findClusterCenters(retr=12, plot=False):
-    global kmeans
-    start_t = time.process_time()
-
-    if verbose: print("find clusters with kmeans")
-    wcss = []
-    ceiling = min(100, round(len(points)/2))
-    for k in range(0, ceiling):
-        prev = kmeans
-        kmeans = KMeans(n_clusters=k+1, n_init=retr, n_jobs=4, random_state=0).fit(points)
-        if k == 0:
-            wcstart = kmeans.inertia_
-        wcss.append(kmeans.inertia_ / wcstart)
-        if k > 0 and plot:
-            if verbose: print("\rkmeans k = %d of %d" % (k, ceiling), end='')
-            wp = (wcss[k] - wcss[k-1], k - (k-1)) # vektor verschieben nach 0,0
-            phi = math.degrees(math.atan(wp[0]/wp[1]))
-            for c in kmeans.cluster_centers_:
-                col = hex(random.randint(10,16777215)).split('x')[1]
-                while len(col) < 6:
-                    col = '0'+col
-                col ='#'+col
-                kcol.append(col)
-                axs[1].plot([k,k-1], [wcss[k],wcss[k-1]], color=col, linestyle='-')
-            if wcss[k] < 0.10:
-                kmeans = prev
-                if verbose: print("")
-                return
-
-    snapshoot(start_t, 'clustering')
-
-### Algorithm functions
 
 def  center(a, b, c):
     """ Returns centroid (geometric center) of a triangle  abc """
     avg_x = (a.x()+b.x()+c.x()) / 3
     avg_y = (a.y()+b.y()+c.y()) / 3
-    return Vertex(explicit_x=avg_x, explicit_y=avg_y)
+    return HDCEL.Vertex(explicit_x=avg_x, explicit_y=avg_y)
 
 def isLeftOf(a, b, v):
     """ (Orient.test) Returns true if v is to the left of a line from a to b. Otherwise false. """
@@ -495,9 +284,9 @@ def construct_hulls():
     for ch in range(len(conv_hulls)):
         if len(conv_hulls[ch]) > 2:
             keeper = conv_hulls[ch].pop()
-            DCEL.make_hull(vertices, conv_hulls[ch])
+            HDCEL.make_hull(vertices, conv_hulls[ch])
             conv_hulls[ch].append(keeper)
-        else: DCEL.make_hull(vertices, conv_hulls[ch])
+        else: HDCEL.make_hull(vertices, conv_hulls[ch])
 
 def depth_search():
     global conv_hulls
@@ -543,31 +332,23 @@ def build_mesh():
         connect_2_hulls(i+1, i)
     depth_search()
 
-
-
-
-
-
 ### Main
 def exithandler(sig, frame):
     print('Exiting')
     exit(3)
 
 def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm=False):
-    global convex_hull, points, indices, vertices
+    global convex_hull, points, indices, vertices # make convex_hull algorithm specific
 
-    if plot:
-        plt.rcParams["figure.figsize"] = (16,9)
-
-    start_t = time.process_time()
-    DCEL.points = points
-    vertices = [Vertex(index=i) for i in range(len(points))]
+    start_t = HCOMMON.snaptime()
+    HDCEL.points = points
+    vertices = [HDCEL.Vertex(index=i) for i in range(len(points))]
 
 
     '''make sure that only one approach is active when running the program, as they have different terms of sorting'''
     if algorithm: #first approach
         if verbose: print("Bens Algorithm")
-        origin = Vertex(explicit_x=c[0], explicit_y=c[1])
+        origin = HDCEL.Vertex(explicit_x=c[0], explicit_y=c[1])
         if verbose: print("Start points are (%i|%i)" % (origin.explicit_x, origin.explicit_y))
 
         sortByDistance(vertices, origin)
@@ -575,10 +356,10 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm=False):
         # Create the first triangle
         if isLeftOf(vertices[0], vertices[1], vertices[2]):
             convex_hull = [vertices[0], vertices[1], vertices[2]]
-            DCEL.make_triangle(vertices[0], vertices[1], vertices[2])
+            HDCEL.make_triangle(vertices[0], vertices[1], vertices[2])
         else:
             convex_hull = [vertices[0], vertices[2], vertices[1]]
-            DCEL.make_triangle(vertices[0], vertices[2], vertices[1])
+            HDCEL.make_triangle(vertices[0], vertices[2], vertices[1])
 
         for i in range(3, len(vertices)):
             iterate(vertices[i])
@@ -591,26 +372,26 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm=False):
         build_mesh()
     ###------------------------------------------------------------------------
 
-    edges = DCEL.get_edge_dict(verbose)
-    snapshoot(start_t, "Computation")
+    edges = HDCEL.get_edge_dict(verbose)
+    HCOMMON.snapshoot(start_t, "Computation", verbose)
 
     written = 1
     '''do not turn on this command when the second approach is active, to avoid losing the start point of pest solution, as there is no start point involved in the second approach'''
-    # written = writeTestSolution(sys.argv[1],instance,c,edges,overwrite)
+    # written = HJSON.writeTestSolution(sys.argv[1],instance,c,edges,overwrite) #TODO ugly
 
     if plot:
-        start_t = time.process_time()
-        drawEdges(edges,points)
+        start_t = HCOMMON.snaptime()
+        HVIS.drawEdges(edges,points)
         if not algorithm:
             for index,conv in enumerate(conv_hulls):
                 for i in range(len(conv)-1):
                     color=["m","r","g"]
-                    #drawSingleHEdge(conv[i], conv[i+1], color[index % 3])
-                    #TODO change SingleHEdge to use DCEL.Edge lkasd
+                    #HVIS.drawSingleHEdge(conv[i], conv[i+1], color[index % 3])
+                    #TODO change SingleHEdge to use HDCEL.Edge lkasd
                     #TODO plot only if edge lkasd exists
-        drawPoints(points,edges)
-        snapshoot(start_t, "Plotting")
-        plt.show()
+        HVIS.drawPoints(points,edges)
+        HCOMMON.snapshoot(start_t, "Plotting", verbose)
+        HVIS.show()
     return written
 
 if __name__ == '__main__':
@@ -629,18 +410,18 @@ if __name__ == '__main__':
         arguments = parser.parse_args()
 
         verbose = arguments.verbose
-        points,instance = readTestInstance(arguments.file)
+        points,instance = HJSON.readTestInstance(arguments.file)
 
-        fig,axs = plt.subplots(2)
+        HVIS.initVis()
         if arguments.kmeans:
-            findClusterCenters(plot=arguments.plot)
+            HCLUSTER.findClusterCenters(points, plot=arguments.plot, verbose=verbose)
 
         if arguments.coord != None:
             exitcode = run(arguments.file, arguments.coord, arguments.overwrite, \
                             arguments.plot, arguments.algorithm)
         else:
-            exitcode = run(arguments.file, randomstart(arguments.rndm), arguments.overwrite, \
-                            arguments.plot, arguments.algorithm)
+            exitcode = run(arguments.file, HCOMMON.randomstart(points, arguments.rndm, verbose), \
+                            arguments.overwrite, arguments.plot, arguments.algorithm)
         if exitcode != 0:
             exit(exitcode)
     except KeyboardInterrupt:
