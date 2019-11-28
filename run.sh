@@ -1,14 +1,13 @@
 #!/bin/bash
-
-COUNTER = 0;
+COUNTER=1;
 while [ 1 ] ; do
-    let COUNTER++
-    echo $COUNTER
+    echo -e "\n$COUNTER"
     for f in instances/*/*.instance.json ; do
+        echo -en "\r\b\b$f\033[0K"
         python3 presentation.py $f -r $COUNTER -o;
         if [ $? -eq 3 ]
             then exit 1
         fi
-        echo -en "\r\b\b$f"
     done;
+    let COUNTER++
 done;
