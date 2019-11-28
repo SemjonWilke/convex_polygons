@@ -3,6 +3,7 @@ Software project for the Computational Geometry Week 2020 competition
 """
 
 import matplotlib.pyplot as plt
+import matplotlib.colors
 import random
 import json
 import math
@@ -13,7 +14,10 @@ from DCEL import Vertex
 import time
 import argparse
 from collections import defaultdict
+from sklearn.cluster import KMeans
 
+kmeans = None
+kcol =[]
 
 convex_hull = []
 def ch(i):
@@ -126,7 +130,9 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False):
         if verbose: print("Solution was weaker by %s edges" % abs(better))
         return 1
 
-def col(color, degree, index):
+def col(color, degree, point, index):
+    if kmeans != None:
+        return kcol[kmeans.predict([point])[0]]
     if degree == None:
         return color
     if degree[index] == 0 or degree[index] == 1:
@@ -149,7 +155,11 @@ def drawPoints(points, edges=None, color='r'):
     """
     degree = pointdegree(edges)
     for i,val in enumerate(points):
-        plt.plot(val[0], val[1], col(color,degree,i)+'o')
+        axs[0].plot(val[0], val[1], color=col(color,degree,val,i), marker='o')
+    if kmeans != None:
+        for i,c in enumerate(kmeans.cluster_centers_):
+            axs[0].plot(c[0], c[1], color='k', marker='o')
+            axs[0].plot(c[0], c[1], color=kcol[i], marker='P')
 
 def drawEdges(edges, points, color='b-'):
     """ draws edges to plt
@@ -157,27 +167,28 @@ def drawEdges(edges, points, color='b-'):
                 points as dictionary of lists 'x' and 'y'
                 color of edges (matplotlib style)
     """
-    for index,val in enumerate(edges['in']):
-        i = edges['in'][index]
-        j = edges['out'][index]
-        plt.plot(
-            [points[i][0], points[j][0]],
-            [points[i][1], points[j][1]],
-            color
-        )
+    if kmeans == None:
+        for index,val in enumerate(edges['in']):
+            i = edges['in'][index]
+            j = edges['out'][index]
+            axs[0].plot(
+                [points[i][0], points[j][0]],
+                [points[i][1], points[j][1]],
+                color
+            )
 
 def drawHull():
     for i in range(len(convex_hull)):
-        plt.plot([ch(i).x(), ch(i+1).x()], [ch(i).y(), ch(i+1).y()], 'r-')
+        axs[0].plot([ch(i).x(), ch(i+1).x()], [ch(i).y(), ch(i+1).y()], 'r-')
 
 def drawSingleEdge(e, color='b'):
-    plt.plot([e.origin.x(), e.nxt.origin.x()], [e.origin.y(), e.nxt.origin.y()], color+'-')
+    axs[0].plot([e.origin.x(), e.nxt.origin.x()], [e.origin.y(), e.nxt.origin.y()], color+'-')
 
 def drawSingleHEdge(inp, outp, color='b'):
-    plt.plot([points[inp][0], points[outp][0]], [points[inp][1], points[outp][1]], color+'-')
+    axs[0].plot([points[inp][0], points[outp][0]], [points[inp][1], points[outp][1]], color+'-')
 
 def drawSinglePoint(v):
-    plt.plot(v.x(), v.y(), 'ks')
+    axs[0].plot(v.x(), v.y(), 'ks')
 
 def randomstart(seed=None):
     random.seed(seed, 2)
@@ -191,10 +202,41 @@ def snapshoot(start_t, msg):
     elp_t = time.process_time() - start_t
     if verbose: print("%s time: %02.0f:%02.0f:%2.2f h" % (msg, elp_t/3600, elp_t/60, elp_t))
 
+def findClusterCenters(retr=12, plot=False):
+    global kmeans
+    start_t = time.process_time()
+
+    if verbose: print("find clusters with kmeans")
+    wcss = []
+    ceiling = min(100, round(len(points)/2))
+    for k in range(0, ceiling):
+        prev = kmeans
+        kmeans = KMeans(n_clusters=k+1, n_init=retr, n_jobs=4, random_state=0).fit(points)
+        if k == 0:
+            wcstart = kmeans.inertia_
+        wcss.append(kmeans.inertia_ / wcstart)
+        if k > 0 and plot:
+            if verbose: print("\rkmeans k = %d of %d" % (k, ceiling), end='')
+            wp = (wcss[k] - wcss[k-1], k - (k-1)) # vektor verschieben nach 0,0
+            phi = math.degrees(math.atan(wp[0]/wp[1]))
+            for c in kmeans.cluster_centers_:
+                col = hex(random.randint(10,16777215)).split('x')[1]
+                while len(col) < 6:
+                    col = '0'+col
+                col ='#'+col
+                kcol.append(col)
+                axs[1].plot([k,k-1], [wcss[k],wcss[k-1]], color=col, linestyle='-')
+            if wcss[k] < 0.10:
+                kmeans = prev
+                if verbose: print("")
+                return
+
+    snapshoot(start_t, 'clustering')
+
 ### Algorithm functions
 
 def  center(a, b, c):
-    """ Returns centroid (geometric center) of a triangle abc """
+    """ Returns centroid (geometric center) of a triangle  abc """
     avg_x = (a.x()+b.x()+c.x()) / 3
     avg_y = (a.y()+b.y()+c.y()) / 3
     return Vertex(explicit_x=avg_x, explicit_y=avg_y)
@@ -583,10 +625,16 @@ if __name__ == '__main__':
         parser.add_argument('-p', '--plot', action='store_true', dest='plot', help='Show plot')
         parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help='Print human readable information')
         parser.add_argument('-a', '--algorithm', action='store_true', dest='algorithm', help='choose algorithm to execute')
+        parser.add_argument('-k', '--kmeans', action='store_true', dest='kmeans', help='find clusters with kmeans')
         arguments = parser.parse_args()
 
         verbose = arguments.verbose
         points,instance = readTestInstance(arguments.file)
+
+        fig,axs = plt.subplots(2)
+        if arguments.kmeans:
+            findClusterCenters(plot=arguments.plot)
+
         if arguments.coord != None:
             exitcode = run(arguments.file, arguments.coord, arguments.overwrite, \
                             arguments.plot, arguments.algorithm)
