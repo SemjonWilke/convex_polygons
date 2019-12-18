@@ -219,7 +219,7 @@ def exithandler(sig, frame):
     print('Exiting')
     exit(3)
 
-def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm=False):
+def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm=""):
     global convex_hull, points, indices, vertices # make convex_hull algorithm specific
 
     start_t = HCOMMON.snaptime()
@@ -228,10 +228,10 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm=False):
 
 
     '''make sure that only one approach is active when running the program, as they have different terms of sorting'''
-    if algorithm: #first approach
+    if algorithm == "ben_v1":
         algorithm_ben_v1.run(_vertices=vertices, _origin=HDCEL.Vertex(explicit_x=c[0], explicit_y=c[1]), _verbose=verbose)
 
-    else: #second approach
+    if algorithm == "abbas":
         if verbose: print("Abbas' Algorithm")
         sort_by_Xcoord()
         indices = [i for i in range(len(points))]
@@ -271,7 +271,7 @@ if __name__ == '__main__':
         parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite', help='Overwrite existing solution if better')
         parser.add_argument('-p', '--plot', action='store_true', dest='plot', help='Show plot')
         parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help='Print human readable information')
-        parser.add_argument('-a', '--algorithm', action='store_true', dest='algorithm', help='choose algorithm to execute')
+        parser.add_argument('-a', '--algorithm', type=str, dest='algorithm', default="ben_v1", choices=["ben_v1", "abbas"], help='choose algorithm to execute')
         parser.add_argument('-k', '--kmeans', action='store_true', dest='kmeans', help='find clusters with kmeans')
         arguments = parser.parse_args()
 
