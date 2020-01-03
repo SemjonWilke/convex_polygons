@@ -93,3 +93,16 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False):
     if fexist and better <= 0:
         if verbose: print("Solution was weaker by %s edges" % abs(better))
         return 1
+
+def readStartPoints(filename):
+    """ reads a startpoints file by name
+    input:      filename as string
+    returns:    points as array of coordinates
+    """
+    points = []
+    with open(filename) as json_file:
+        data = json.load(json_file)
+        for p in data['points']:
+            points.append([int(p['x']), int(p['y'])]) # TODO does not work for float
+        json_file.close()
+        return points

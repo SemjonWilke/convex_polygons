@@ -8,6 +8,7 @@ from enum import Enum
 import numpy as np
 from HSIDES import *
 from HEARTRIM import earTrimArea
+from HJSON import readStartPoints
 
 seed(98765432)
 all_iterators = []
@@ -15,16 +16,22 @@ active_iterators = []
 vertices = []
 verbose = False
 
-def run(_vertices, _verbose):
+def run(_vertices, _startpoints, _verbose):
     global vertices, verbose
     vertices = _vertices
     verbose = _verbose
 
     if verbose: print("Bens Algorithm v2")
-    if verbose: print("Start points are (%i|%i)" % (_origin.explicit_x, _origin.explicit_y))
     vertices = [Vertex(index=i) for i in range(len(vertices))]
 
-    starting_points = [Vertex(explicit_x=randint(0,14000), explicit_y=randint(0,8000)) for i in range(4)]
+    startpoints = []
+    if _startpoints is None:
+        if verbose: print("Using random startpoints")
+        starting_points = [Vertex(explicit_x=randint(0,14000), explicit_y=randint(0,8000)) for i in range(4)]
+    else:
+        if verbose: print("Startpoints: " + _startpoints)
+        l = readStartPoints(_startpoints)
+        starting_points = [Vertex(explicit_x=l[i][0], explicit_y=l[i][1]) for i in range(len(l))]
 
     for p in starting_points:
         Iterator(p)
@@ -379,11 +386,11 @@ class Iterator:
         if self.ch_i(s_left)==self.ch_i(s_right) and len(o)<=2:
             i+=1
             s[i].connect_to(o[j])
-            print("WARN: Rare edge case during merge.")
+            if verbose: print("WARN: Rare edge case during merge.")
         elif other.ch_i(o_left)==other.ch_i(o_right) and len(s)<=2:
             j+=1
             s[i].connect_to(o[j])
-            print("WARN: Rare edge case during merge.")
+            if verbose: print("WARN: Rare edge case during merge.")
 
         while 1:
             if i+1<len(s) and not self.intersects(s[i+1], o[j]) and not other.intersects(s[i+1], o[j]):
@@ -445,7 +452,7 @@ class Iterator:
 
         # Check for status: UNABLE_SKIPPED
         if v.on_hull or v.occupied or occluded(v, self.ch(i), self.ch(j), self):
-            if override is not None and occluded(v, self.ch(i), self.ch(j), self): print("OCCLUDED")
+            if verbose and override is not None and occluded(v, self.ch(i), self.ch(j), self): print("OCCLUDED")
             return It_Response.UNABLE_SKIPPED
 
         # Check for status: ABLE_REFUSED

@@ -23,7 +23,7 @@ def exithandler(sig, frame):
     print('Exiting')
     exit(3)
 
-def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm=""):
+def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm="", startpoints=None):
     global convex_hull, points, indices, vertices # make convex_hull algorithm specific
 
     start_t = HCOMMON.snaptime()
@@ -36,7 +36,7 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm=""):
         algorithm_ben_v1.run(_vertices=vertices, _origin=HDCEL.Vertex(explicit_x=c[0], explicit_y=c[1]), _verbose=verbose)
 
     if algorithm == "ben_v2":
-        algorithm_ben_v2.run(_vertices=vertices, _verbose=verbose)
+        algorithm_ben_v2.run(_vertices=vertices, _startpoints=startpoints, _verbose=verbose)
 
     if algorithm == "abbas":
         algorithm_abbas.run(verbose, vertices)
@@ -77,6 +77,7 @@ if __name__ == '__main__':
         parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help='Print human readable information')
         parser.add_argument('-a', '--algorithm', type=str, dest='algorithm', default="ben_v1", choices=["ben_v1", "ben_v2", "abbas"], help='choose algorithm to execute')
         parser.add_argument('-k', '--kmeans', action='store_true', dest='kmeans', help='find clusters with kmeans')
+        parser.add_argument('-s', '--startpoints', type=str, dest='startpoints', help='Starting points for ben_v2 algorithm')
         arguments = parser.parse_args()
 
         verbose = arguments.verbose
@@ -88,10 +89,10 @@ if __name__ == '__main__':
 
         if arguments.coord != None:
             exitcode = run(arguments.file, arguments.coord, arguments.overwrite, \
-                            arguments.plot, arguments.algorithm)
+                            arguments.plot, arguments.algorithm, arguments.startpoints)
         else:
             exitcode = run(arguments.file, HCOMMON.randomstart(points, arguments.rndm, verbose), \
-                            arguments.overwrite, arguments.plot, arguments.algorithm)
+                            arguments.overwrite, arguments.plot, arguments.algorithm, arguments.startpoints)
         if exitcode != 0:
             exit(exitcode)
     except KeyboardInterrupt:
