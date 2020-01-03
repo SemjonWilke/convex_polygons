@@ -9,6 +9,7 @@ import numpy as np
 from HSIDES import *
 from HEARTRIM import earTrimArea
 from HJSON import readStartPoints
+import HMERGE
 
 seed(98765432)
 all_iterators = []
@@ -361,46 +362,7 @@ class Iterator:
         s_right = getCHIndex(srv, self)
         o_left = getCHIndex(olv, other)
         o_right = getCHIndex(orv, other)
-        s_it = s_left
-        o_it = o_left
-
-        #if debug: return
-
-        s = [self.ch(s_left)]
-        i = s_left - 1
-        while self.ch_i(s_right)!=self.ch_i(i):
-            s.append(self.ch(i))
-            i-=1
-        s.append(self.ch(s_right))
-
-        o = [other.ch(o_left)]
-        i = o_left + 1
-        while other.ch_i(o_right)!=other.ch_i(i):
-            o.append(other.ch(i))
-            i+=1
-        o.append(other.ch(o_right))
-
-        i, j = 0, 0
-        s[i].connect_to(o[j])
-
-        if self.ch_i(s_left)==self.ch_i(s_right) and len(o)<=2:
-            i+=1
-            s[i].connect_to(o[j])
-            if verbose: print("WARN: Rare edge case during merge.")
-        elif other.ch_i(o_left)==other.ch_i(o_right) and len(s)<=2:
-            j+=1
-            s[i].connect_to(o[j])
-            if verbose: print("WARN: Rare edge case during merge.")
-
-        while 1:
-            if i+1<len(s) and not self.intersects(s[i+1], o[j]) and not other.intersects(s[i+1], o[j]):
-                i+=1
-                s[i].connect_to(o[j])
-            if j+1<len(o) and not self.intersects(s[i], o[j+1]) and not other.intersects(s[i], o[j+1]):
-                j+=1
-                s[i].connect_to(o[j])
-            if i>=len(s)-1 and j>=len(o)-1:
-                break
+        HMERGE.merge_Hulls(self, other, s_left, s_right, o_left, o_right)
 
         self.fix_hull(point_on_hull=self.ch(s_left), thorough=False)
         self.vertex_list[self.current_index+1:len(self.vertex_list)] = sortByDistanceToHull(self.vertex_list[self.current_index+1:len(self.vertex_list)], self)
