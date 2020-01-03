@@ -15,6 +15,7 @@ import HJSON
 import HVIS
 
 import algorithm_ben_v1
+import algorithm_ben_v2
 import algorithm_abbas
 
 ### Main
@@ -33,6 +34,9 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm=""):
     '''make sure that only one approach is active when running the program, as they have different terms of sorting'''
     if algorithm == "ben_v1":
         algorithm_ben_v1.run(_vertices=vertices, _origin=HDCEL.Vertex(explicit_x=c[0], explicit_y=c[1]), _verbose=verbose)
+
+    if algorithm == "ben_v2":
+        algorithm_ben_v2.run(_vertices=vertices, _verbose=verbose)
 
     if algorithm == "abbas":
         algorithm_abbas.run(verbose, vertices)
@@ -71,7 +75,7 @@ if __name__ == '__main__':
         parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite', help='Overwrite existing solution if better')
         parser.add_argument('-p', '--plot', action='store_true', dest='plot', help='Show plot')
         parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help='Print human readable information')
-        parser.add_argument('-a', '--algorithm', type=str, dest='algorithm', default="ben_v1", choices=["ben_v1", "abbas"], help='choose algorithm to execute')
+        parser.add_argument('-a', '--algorithm', type=str, dest='algorithm', default="ben_v1", choices=["ben_v1", "ben_v2", "abbas"], help='choose algorithm to execute')
         parser.add_argument('-k', '--kmeans', action='store_true', dest='kmeans', help='find clusters with kmeans')
         arguments = parser.parse_args()
 

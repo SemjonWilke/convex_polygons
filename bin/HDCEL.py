@@ -2,10 +2,12 @@ import math
 
 # Sample data for testing
 points = []
-#points['x'] = [0, 1, 0, 1]
-#points['y'] = [0, 0, 1, 1]
 
-# Returns angle between an edge and a origin-c edge
+def isLeftOf(a, b, v):
+    """ (Orient.test) Returns true if v is to the left of a line from a to b. Otherwise false. """
+    return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) >= 0
+
+# Returns angle between an edge and a hypothetical origin-to-c edge
 def angle(edge, c):
     a=edge.nxt.origin
     b=edge.origin
@@ -23,12 +25,24 @@ def chain(e1, e2):
     e1.nxt = e2
     e2.prev = e1
 
+def area(e):
+    assert(e.nxt is not None)
+    tmp = e
+    ret = []
+    while tmp.nxt!=e:
+        ret.append(tmp.origin)
+        tmp = tmp.nxt
+    return ret
+
 # Vertex class
 class Vertex:
     i = -1
     incidentEdge = None
     explicit_x = None
     explicit_y = None
+    occupied = False
+    on_hull = False
+    claimant = None
 
     def __eq__(self, v):
         return self.i== v.i
@@ -51,6 +65,33 @@ class Vertex:
 
     def __str__(self):
         return "Index: {0} X: {1} Y: {2}".format(self.i,self.x(),self.y())
+
+    def get_convex_incidentEdge(self):
+        e = self.incidentEdge
+        if e is None: return None
+        while angle(e, e.twin.nxt.nxt.origin) < 180:
+            e = e.twin.nxt
+            if e == self.incidentEdge: return None
+        return e.twin
+
+    def get_connected_edges(self):
+        ret = []
+        if self.incidentEdge==None:
+            return ret
+        e = self.incidentEdge
+        while(True):
+            ret.append(e)
+            e = e.twin.nxt
+            if(e==self.incidentEdge): break
+        return ret
+
+    def clear(self):
+        self.occupied = False
+        self.on_hull = False
+        self.claimant = None
+        for e in self.get_connected_edges():
+            e.remove()
+        self.incidentEdge = None
 
     def get_left_right_edge(self, v):
         min_angle = 99999
@@ -92,6 +133,7 @@ class Vertex:
             twin(back, forth)
 
             v.incidentEdge = forth
+            return back
 
         else:
             s_left, s_right = self.get_left_right_edge(v)
@@ -107,6 +149,7 @@ class Vertex:
             chain(v_to_s, s_left)
 
             twin(s_to_v, v_to_s)
+            return s_to_v
 
 class _list:
     _head = None
@@ -207,11 +250,16 @@ class Edge:
 
     def remove(self, recursive=True):
         edge_list.remove(self)
-        self.nxt.prev = self.twin.prev
-        self.prev.nxt = self.twin.nxt
 
-        if(self.origin.incidentEdge==self):
-            assert(self.twin.nxt!=self)
+        if self.nxt!=self.twin:
+            self.nxt.prev = self.twin.prev
+        if self.prev!=self.twin:
+            self.prev.nxt = self.twin.nxt
+
+        # Update incidentEdge if we removed it
+        if self.twin.nxt==self:
+            self.origin.incidentEdge = None
+        elif self.origin.incidentEdge==self:
             self.origin.incidentEdge = self.twin.nxt
 
         if(recursive): self.twin.remove(False)
@@ -226,6 +274,9 @@ def print_vertex(v):
             if(e==v.incidentEdge): break
 
 def make_triangle(a, b, c):
+    if not isLeftOf(a, b, c):
+        a, b, c = a, c, b
+
     a.incidentEdge = Edge(a, None, None)
     b.incidentEdge = Edge(b, None, None)
     c.incidentEdge = Edge(c, None, None)
@@ -246,79 +297,4 @@ def make_triangle(a, b, c):
     twin(b.incidentEdge, b.incidentEdge.twin)
     twin(c.incidentEdge, c.incidentEdge.twin)
 
-
-
-def make_hull(vertices, inds):
-    if len(inds) == 1:
-            return
-    if len(inds) == 2:
-        vertices[inds[0]].incidentEdge = Edge(vertices[inds[0]], None, None)
-        vertices[inds[1]].incidentEdge = Edge(vertices[inds[1]], None, None)
-        twin(vertices[inds[0]].incidentEdge, vertices[inds[1]].incidentEdge)
-        chain(vertices[inds[0]].incidentEdge, vertices[inds[1]].incidentEdge)
-        chain(vertices[inds[1]].incidentEdge, vertices[inds[0]].incidentEdge)
-        return
-    j = None
-    k = None
-    for i in range(len(inds)):
-        vertices[inds[i]].incidentEdge = Edge(vertices[inds[i]], None, None)
-        if i == len(inds)-1:
-            j = 0
-        else:
-            j = i +1
-        vertices[inds[i]].incidentEdge.twin = Edge(vertices[inds[j]], None, None)
-        twin(vertices[inds[i]].incidentEdge, vertices[inds[i]].incidentEdge.twin)
-    for i in range(len(inds)):
-        if i == len(inds)-1:
-            j = 0
-        else:
-            j = i +1
-        if i == 0:
-            k = len(inds)-1
-        else:
-            k = i -1
-        chain(vertices[inds[i]].incidentEdge, vertices[inds[j]].incidentEdge)
-        chain(vertices[inds[i]].incidentEdge.twin, vertices[inds[k]].incidentEdge.twin)
-
-
-
-"""
-#Testing
-
-t1 = Vertex(0)
-t2 = Vertex(1)
-t3 = Vertex(2)
-
-t1.incidentEdge = Edge(t1, None, None)
-t2.incidentEdge = Edge(t2, None, None)
-t3.incidentEdge = Edge(t3, None, None)
-
-chain(t1.incidentEdge, t2.incidentEdge)
-chain(t2.incidentEdge, t3.incidentEdge)
-chain(t3.incidentEdge, t1.incidentEdge)
-
-t1.incidentEdge.twin = Edge(t2, None, None)
-t2.incidentEdge.twin = Edge(t3, None, None)
-t3.incidentEdge.twin = Edge(t1, None, None)
-
-chain(t1.incidentEdge.twin, t3.incidentEdge.twin)
-chain(t3.incidentEdge.twin, t2.incidentEdge.twin)
-chain(t2.incidentEdge.twin, t1.incidentEdge.twin)
-
-twin(t1.incidentEdge, t1.incidentEdge.twin)
-twin(t2.incidentEdge, t2.incidentEdge.twin)
-twin(t3.incidentEdge, t3.incidentEdge.twin)
-
-
-###############################
-
-t4 = Vertex(3)
-t2.connect_to(t4)
-t3.connect_to(t4)
-t2.incidentEdge.twin.nxt.twin.nxt.remove()
-
-print_vertex(t1)
-print_vertex(t2)
-print_vertex(t3)
-print_vertex(t4)
-"""
+    return [a,b,c]
