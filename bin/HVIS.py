@@ -11,7 +11,7 @@ def col(color, degree, point, index):
     if degree == None:
         return color
     if degree[index] == 0 or degree[index] == 1:
-        return 'w' #white
+        return 'k' #white
     if degree[index] == 2:
         return 'g' #green
     if degree[index] == 3:

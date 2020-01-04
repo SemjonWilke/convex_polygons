@@ -16,6 +16,7 @@ import HVIS
 
 import algorithm_ben_v1
 import algorithm_ben_v2
+import algorithm_ben_v3
 import algorithm_abbas
 
 ### Main
@@ -37,6 +38,9 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm="", sta
 
     if algorithm == "ben_v2":
         algorithm_ben_v2.run(_vertices=vertices, _startpoints=startpoints, _verbose=verbose)
+
+    if algorithm == "ben_v3":
+        algorithm_ben_v3.run(_vertices=vertices, _startpoints=startpoints, _verbose=verbose)
 
     if algorithm == "abbas":
         algorithm_abbas.run(verbose, vertices)
@@ -75,7 +79,7 @@ if __name__ == '__main__':
         parser.add_argument('-o', '--overwrite', action='store_true', dest='overwrite', help='Overwrite existing solution if better')
         parser.add_argument('-p', '--plot', action='store_true', dest='plot', help='Show plot')
         parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help='Print human readable information')
-        parser.add_argument('-a', '--algorithm', type=str, dest='algorithm', default="ben_v1", choices=["ben_v1", "ben_v2", "abbas"], help='choose algorithm to execute')
+        parser.add_argument('-a', '--algorithm', type=str, dest='algorithm', default="ben_v1", choices=["ben_v1", "ben_v2", "ben_v3", "abbas"], help='choose algorithm to execute')
         parser.add_argument('-k', '--kmeans', action='store_true', dest='kmeans', help='find clusters with kmeans')
         parser.add_argument('-s', '--startpoints', type=str, dest='startpoints', help='Starting points for ben_v2 algorithm')
         arguments = parser.parse_args()

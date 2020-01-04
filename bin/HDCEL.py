@@ -118,9 +118,18 @@ class Vertex:
         return max_angle_edge, min_angle_edge
 
     def connect_to(self, v):
-        assert(self.incidentEdge!=None)
+        if(v.incidentEdge is not None and self.incidentEdge is None):
+            v.connect_to(self)
 
-        if(v.incidentEdge==None):
+        if(self.incidentEdge is None and v.incidentEdge is None):
+            self.incidentEdge = Edge(self)
+            v.incidentEdge = Edge(v)
+
+            chain(self.incidentEdge, v.incidentEdge)
+            chain(v.incidentEdge, self.incidentEdge)
+            twin(self.incidentEdge, v.incidentEdge)
+
+        if(v.incidentEdge is None):
             left, right = self.get_left_right_edge(v)
 
             back = Edge(self, None, None)
@@ -298,3 +307,8 @@ def make_triangle(a, b, c):
     twin(c.incidentEdge, c.incidentEdge.twin)
 
     return [a,b,c]
+
+def get_triangle(a, b, c):
+    if not isLeftOf(a, b, c):
+        a, b, c = a, c, b
+    return [a, b, c]
