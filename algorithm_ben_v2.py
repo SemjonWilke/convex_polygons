@@ -10,6 +10,7 @@ from HSIDES import *
 from HEARTRIM import earTrimArea
 from HJSON import readStartPoints
 import HMERGE
+import HCLEAN
 
 seed(98765432)
 all_iterators = []
@@ -38,6 +39,8 @@ def run(_vertices, _startpoints, _verbose):
         Iterator(p)
 
     while(cycle()): continue
+
+    HCLEAN.clean_edges()
 
 def  center(a, b, c):
     """ Returns centroid (geometric center) of a triangle abc """
