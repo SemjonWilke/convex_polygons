@@ -8,6 +8,7 @@ from enum import Enum
 import numpy as np
 from HJSON import readStartPoints
 import HMERGE
+import HCLEAN
 
 vertices = []
 hulls = []
@@ -27,9 +28,22 @@ def run(_vertices, _startpoints, _verbose):
         l = readStartPoints(_startpoints)
         starting_points = [Vertex(explicit_x=l[i][0], explicit_y=l[i][1]) for i in range(len(l))]
 
+    # First pass
     for p in starting_points:
         h = Hull(p)
         h.grow()
+
+    # Second pass
+    for p in vertices:
+        if p.claimant is None:
+            h = Hull(p)
+            h.grow()
+
+    # Convex hull
+    HDCEL.form_convex_hull(vertices)
+
+    # Clean
+    HCLEAN.clean_edges()
 
 
 class Hull:

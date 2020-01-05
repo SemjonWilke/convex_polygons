@@ -118,6 +118,9 @@ class Vertex:
         return max_angle_edge, min_angle_edge
 
     def connect_to(self, v):
+        for e in self.get_connected_edges():
+            if e.nxt.origin == v: return
+
         if(v.incidentEdge is not None and self.incidentEdge is None):
             v.connect_to(self)
 
@@ -227,6 +230,23 @@ def get_edge_dict(verbose):
         return {'in' : [e.origin.i for e in e_list], 'out' : [e.nxt.origin.i for e in e_list]}
     return dict()
 
+def get_edge_list():
+    global edge_list
+    _set = set()
+    if edge_list._size != 0:
+        _e = edge_list._head
+        while(True):
+            if _e.twin not in _set:
+                _set.add(_e)
+            _e = _e.succ
+
+            if(_e == None):
+                break
+
+        e_list = list(_set)
+        return e_list
+    return []
+
 
 # Edge class
 class Edge:
@@ -312,3 +332,31 @@ def get_triangle(a, b, c):
     if not isLeftOf(a, b, c):
         a, b, c = a, c, b
     return [a, b, c]
+
+def sortByX(vlist):
+    rlist = vlist.copy()
+    rlist.sort(key=lambda x: x.x())
+    return rlist
+
+def cross(o, a, b):
+        return (a.x() - o.x()) * (b.y() - o.y()) - (a.y() - o.y()) * (b.x() - o.x())
+
+def get_convex_hull(verts):
+    verts = sortByX(verts)
+
+    lower_hull = []
+    for v in verts:
+        while len(lower_hull) >= 2 and cross(lower_hull[-2], lower_hull[-1], v) <= 0: lower_hull.pop()
+        lower_hull.append(v)
+
+    upper_hull = []
+    for v in reversed(verts):
+        while len(upper_hull) >= 2 and cross(upper_hull[-2], upper_hull[-1], v) <= 0: upper_hull.pop()
+        upper_hull.append(v)
+
+    return lower_hull[:-1] + upper_hull[:-1]
+
+def form_convex_hull(verts):
+    h = get_convex_hull(verts)
+    for i in range(len(h)):
+        h[i-1].connect_to(h[i])
