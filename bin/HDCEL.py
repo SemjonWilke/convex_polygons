@@ -44,6 +44,25 @@ class Vertex:
     on_hull = False
     claimant = None
 
+    def magnitude(self):
+        assert(math.sqrt(self.x()**2 + self.y()**2)>0.0001)
+        return math.sqrt(self.x()**2 + self.y()**2)
+
+    def normalized(self):
+        l = self.magnitude()
+        n = Vertex(self.x()/l, self.y()/l)
+        assert(n.magnitude()>0.95 and n.magnitude()<1.05)
+        return n
+
+    def mul(self, d):
+        return Vertex(self.x()*d, self.y()*d)
+
+    def add(self, x, y):
+        return Vertex(self.x()+x, self.y()+y)
+
+    def add(self, v):
+        return Vertex(self.x()+v.x(), self.y()+v.y())
+
     def __eq__(self, v):
         return self.i== v.i
 
@@ -118,11 +137,13 @@ class Vertex:
         return max_angle_edge, min_angle_edge
 
     def connect_to(self, v):
+        assert(v!=self)
+
         for e in self.get_connected_edges():
-            if e.nxt.origin == v: return
+            if e.nxt.origin == v: return e
 
         if(v.incidentEdge is not None and self.incidentEdge is None):
-            v.connect_to(self)
+            return v.connect_to(self).twin
 
         if(self.incidentEdge is None and v.incidentEdge is None):
             self.incidentEdge = Edge(self)
@@ -131,6 +152,7 @@ class Vertex:
             chain(self.incidentEdge, v.incidentEdge)
             chain(v.incidentEdge, self.incidentEdge)
             twin(self.incidentEdge, v.incidentEdge)
+            return self.incidentEdge
 
         if(v.incidentEdge is None):
             left, right = self.get_left_right_edge(v)
@@ -247,6 +269,22 @@ def get_edge_list():
         return e_list
     return []
 
+def get_full_edge_list():
+    global edge_list
+    _set = set()
+    if edge_list._size != 0:
+        _e = edge_list._head
+        while(True):
+            _set.add(_e)
+            _e = _e.succ
+
+            if(_e == None):
+                break
+
+        e_list = list(_set)
+        return e_list
+    return []
+
 
 # Edge class
 class Edge:
@@ -276,6 +314,9 @@ class Edge:
         '''could be helpful for testing purposes'''
         return "Origin: {0} Prev: {1} Next: {2} Twin: {3}".format(self.origin, \
                 self.prev.origin,self.nxt.origin,self.twin.origin)
+
+    def to_vector(self):
+        return Vertex(self.nxt.origin.x() - self.origin.x(), self.nxt.origin.y() - self.origin.y())
 
     def remove(self, recursive=True):
         edge_list.remove(self)
