@@ -2,22 +2,10 @@ import json
 
 import HCOMMON
 
-def readTestInstance(filename):
-    """ reads a test instance file by name
-    input:      filename as string
-    returns:    points as array of coordinates
-                instance name as string
-    """
-    points = []
-    with open(filename) as json_file:
-        data = json.load(json_file)
-        for p in data['points']:
-            points.append([int(p['x']), int(p['y'])]) # TODO does not work for float
-        instance = data['name']
-        json_file.close()
-        return points, instance
+points = []
+verbose = True
 
-def getmeta(filename, edges, coord):
+def getmeta(filename, edges, coord, alg):
 
     degrees = HCOMMON.pointdegree(edges,points)
 
@@ -46,11 +34,14 @@ def getmeta(filename, edges, coord):
         try: degmaxov = max(int(data['meta']['degree_max_overall']), degmaxov)
         except: pass
         solutionfp.close()
-    return { 'comment' : '', 'iteration' : str(iteration), 'coordinates' : str(coord), 'edges' : str(edgenum), \
-            'degree_avg' : str(degavg), 'deg_max' : str(degmax), 'edges_better' : str(edgenumbetter), \
-            'degree_avg_overall' : str(degavgov), 'degree_max_overall' : str(degmaxov) }
+    return { 'comment' : "Solution by Students of FU Berlin", 'iteration' : str(iteration),
+             'coordinates' : str(coord), 'edges' : str(edgenum), 'degree_avg' : str(degavg),
+             'deg_max' : str(degmax), 'edges_better' : str(edgenumbetter),
+             'degree_avg_overall' : str(degavgov), 'degree_max_overall' : str(degmaxov),
+             'algorithm' : alg, 'authors': ["Konstantin Jaehne", "Benjamin Kahl",
+                                            "Semjon Kerner", "Abbas Mohammed Murrey"] }
 
-def writeTestSolution(filename, instance, coord, edges=[], overwrite=False):
+def writeTestSolution(filename, instance, coord, edges=[], overwrite=False, algorithm="ben_v1"):
     """ writes edges to a solution file
     input:      filename as string
                 instance name as string
@@ -59,7 +50,7 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False):
 
     filename = "solutions/" + filename.split("/",1)[-1] # fix path
     filename = filename.split(".",1)[0] + ".solution.json" # substitute "instance" with "solution"
-    meta = getmeta(filename, edges, coord)
+    meta = getmeta(filename, edges, coord, algorithm)
     better = int(meta['edges_better'])
 
     fexist = True
@@ -99,10 +90,25 @@ def readStartPoints(filename):
     input:      filename as string
     returns:    points as array of coordinates
     """
-    points = []
+    global points
     with open(filename) as json_file:
         data = json.load(json_file)
         for p in data['points']:
             points.append([int(p['x']), int(p['y'])]) # TODO does not work for float
         json_file.close()
         return points
+
+def readTestInstance(filename):
+    """ reads a test instance file by name
+    input:      filename as string
+    returns:    points as array of coordinates
+                instance name as string
+    """
+    global points
+    with open(filename) as json_file:
+        data = json.load(json_file)
+        for p in data['points']:
+            points.append([int(p['x']), int(p['y'])]) # TODO does not work for float
+        instance = data['name']
+        json_file.close()
+        return points, instance

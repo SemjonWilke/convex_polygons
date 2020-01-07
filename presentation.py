@@ -49,9 +49,9 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm="", sta
     edges = HDCEL.get_edge_dict(verbose)
     HCOMMON.snapshoot(start_t, "Computation", verbose)
 
-    written = 1
+    #written = 1
     '''do not turn on this command when the second approach is active, to avoid losing the start point of pest solution, as there is no start point involved in the second approach'''
-    # written = HJSON.writeTestSolution(sys.argv[1],instance,c,edges,overwrite) #TODO ugly
+    written = HJSON.writeTestSolution(filename,instance,c,edges,overwrite,algorithm)
 
     if plot:
         start_t = HCOMMON.snaptime()
