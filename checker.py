@@ -54,8 +54,6 @@ def writeCheck(filename, status, points):
     except:
         exit(1)
 
-    data['meta']['comment'] = "Solution by Students of FU Berlin"
-    data['meta']['authors'] = ["Konstantin Jaehne", "Benjamin Kahl", "Semjon Kerner", "Abbas Mohammed Murrey"]
     data['meta']['checker_feasible'] = str(status.is_feasible())
     data['meta']['checker_msg'] = str(status.get_message())
     data['meta']['checker_obj_val'] = str(status.get_objective_value())
@@ -64,7 +62,6 @@ def writeCheck(filename, status, points):
     json_file = open(filename, 'w')
     json.dump(data, json_file, indent=1)
     json_file.close()
-    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Bens Algorithm for SoCG')
