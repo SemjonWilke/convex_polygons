@@ -78,7 +78,7 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False, algo
 
     if not fexist or (fexist and better > 0 and overwrite):
         with open(filename, 'w') as json_file:
-            json.dump(data, json_file)
+            json.dump(data, json_file, indent=1)
         if verbose: print("Solution written to %s" % (filename))
         return 0
     if fexist and better <= 0:
