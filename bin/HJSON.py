@@ -90,13 +90,13 @@ def readStartPoints(filename):
     input:      filename as string
     returns:    points as array of coordinates
     """
-    global points
+    spoints = []
     with open(filename) as json_file:
         data = json.load(json_file)
         for p in data['points']:
-            points.append([int(p['x']), int(p['y'])]) # TODO does not work for float
+            spoints.append([int(p['x']), int(p['y'])]) # TODO does not work for float
         json_file.close()
-        return points
+        return spoints
 
 def readTestInstance(filename):
     """ reads a test instance file by name
