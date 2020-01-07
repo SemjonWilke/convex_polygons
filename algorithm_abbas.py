@@ -1,8 +1,9 @@
-
 import sys
 sys.path.append('./bin')
 import HDCEL as DCEL
 from collections import defaultdict
+
+verbose = False
 
 upper_hull = list()
 lower_hull = list()
@@ -187,7 +188,12 @@ def g_convex_hull():
 
 def build_mesh():
     global upper_hull, lower_hull, indices, conv_hulls, vertices
+    i = 0;
     while len(indices) > 0:
+        i += 1
+        if verbose:
+            print("\r%d / %d" % (i, len(indices)), end="")
+            sys.stdout.flush()
         _hull = g_convex_hull()
         conv_hulls.append(_hull)
         #------------------------------------------------------------ bottleneck of computation time
@@ -203,7 +209,9 @@ def build_mesh():
     depth_search()
 
 
-def run(verbose, verts):
+def run(vbs, verts):
+    global verbose
+    verbose = vbs
     if verbose: print("Abbas' Algorithm")
     global indices, vertices
     vertices = verts;
