@@ -108,7 +108,7 @@ def readTestInstance(filename):
     with open(filename) as json_file:
         data = json.load(json_file)
         for p in data['points']:
-            points.append([int(p['x']), int(p['y'])]) # TODO does not work for float
+            points.append([float(p['x']), float(p['y'])]) # TODO does not work for float
         instance = data['name']
         json_file.close()
         return points, instance
