@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser.add_argument('-p', type=int, nargs='?', default=0, dest='plot', help='Plot it, if you must')
     parser.add_argument('-v', action='store_true', dest='verbose', help='Print debug messages, if you must')
     arguments = parser.parse_args()
+    arguments.plot = 0
 
     start_t = HCOMMON.snaptime()
 # =============================================================================
@@ -131,11 +132,11 @@ if __name__ == "__main__":
         x.append(s[0])
         y.append(s[1])
         z.append(s[2])
-        if (s[3] > max(avg,lim)) and (i < arguments.sky) and (i < (len(instance_points)/3)):
-            out.append([s[0],s[1]])
-            w.append((s[3]*1000)*-1)
-        else:
-            w.append(0)
+        #if (s[3] > max(avg,lim)) and (i < arguments.sky) and (i < (len(instance_points)/3)):
+        out.append([s[0],s[1]])
+            #w.append((s[3]*1000)*-1)
+        #else:
+            #w.append(0)
 
     if arguments.verbose: print("#%d, limit: %d, avg: %d" % (len(out), lim, avg))
 
@@ -173,7 +174,7 @@ if __name__ == "__main__":
 # write to json file ----------------------------------------------------------
 filename = arguments.file
 filename = "startpoints/" + filename.split("/",1)[-1] # fix path
-filename = filename.split(".",1)[0] + ".sky-" + str(min(arguments.sky, math.floor(len(instance_points)/3))) +".json" # substitute "instance" with "solution"
+filename = filename.split(".",1)[0] + ".sky-" + str(len(out)) + ".json" # substitute "instance" with "solution"
 
 data = {
         "type": "Startpoints",
