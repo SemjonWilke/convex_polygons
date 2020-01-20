@@ -3,50 +3,70 @@
  "instance_name": "london-0000010",
  "meta": {
   "comment": "Solution by Students of FU Berlin",
-  "iteration": "2",
-  "coordinates": "(15011, 15331)",
-  "edges": "14",
-  "degree_avg": "2.8",
-  "deg_max": "3",
+  "iteration": "1",
+  "coordinates": "(13067, 9003)",
+  "edges": "15",
+  "degree_avg": "3.0",
+  "deg_max": "4",
   "edges_better": "1",
-  "degree_avg_overall": "9.0",
+  "degree_avg_overall": "6.2",
   "degree_max_overall": "5",
-  "algorithm": "abbas",
   "authors": [
    "Konstantin Jaehne",
    "Benjamin Kahl",
    "Semjon Kerner",
    "Abbas Mohammed Murrey"
   ],
-  "checker_feasible": "False",
-  "checker_msg": "There is a non-convex face at the point with index 5!",
-  "checker_obj_val": "-1",
-  "score": "0.38461538461538464"
+  "algorithm": "ben_v1",
+  "checker_feasible": "True",
+  "checker_msg": "",
+  "checker_obj_val": "6",
+  "score": "0.46153846153846156"
  },
  "edges": [
   {
-   "i": "2",
-   "j": "3"
+   "i": "5",
+   "j": "4"
   },
   {
-   "i": "1",
-   "j": "2"
-  },
-  {
-   "i": "0",
-   "j": "3"
+   "i": "8",
+   "j": "9"
   },
   {
    "i": "6",
    "j": "5"
   },
   {
+   "i": "3",
+   "j": "0"
+  },
+  {
+   "i": "6",
+   "j": "4"
+  },
+  {
+   "i": "2",
+   "j": "3"
+  },
+  {
+   "i": "4",
+   "j": "7"
+  },
+  {
    "i": "8",
    "j": "6"
   },
   {
+   "i": "2",
+   "j": "1"
+  },
+  {
+   "i": "5",
+   "j": "2"
+  },
+  {
    "i": "7",
-   "j": "9"
+   "j": "0"
   },
   {
    "i": "8",
@@ -57,28 +77,12 @@
    "j": "0"
   },
   {
-   "i": "0",
-   "j": "7"
-  },
-  {
-   "i": "2",
-   "j": "5"
-  },
-  {
-   "i": "9",
-   "j": "4"
-  },
-  {
-   "i": "3",
-   "j": "4"
-  },
-  {
-   "i": "9",
-   "j": "8"
-  },
-  {
    "i": "4",
-   "j": "6"
+   "j": "3"
+  },
+  {
+   "i": "7",
+   "j": "9"
   }
  ]
 }
