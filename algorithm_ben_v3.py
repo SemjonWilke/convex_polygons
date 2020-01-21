@@ -31,18 +31,20 @@ def run(_vertices, _startpoints, _verbose):
 
     # First pass
     print("First pass")
-    for p in starting_points:
-        h = Hull(p)
+    for i in range(len(starting_points)):
+        h = Hull(starting_points[i])
         h.grow()
+        print("\r"+str(int(100*i/len(starting_points)))+"%", end='')
 
     # Second pass
     print("Second pass")
-    for p in vertices:
-        if p.claimant is None:
-            h = Hull(p)
+    for i in range(len(vertices)):
+        if vertices[i].claimant is None:
+            h = Hull(vertices[i])
             h.grow()
+        print("\r"+str(int(100*i/len(vertices)))+"%", end='')
 
-    # Convex hull
+    ## Convex hull
     print("Outer hull")
     HDCEL.form_convex_hull(vertices)
 
@@ -52,6 +54,9 @@ def run(_vertices, _startpoints, _verbose):
 
     print("Final pass")
     HFIX.run(vertices)
+
+    print("Integrating stray points")
+    HFIX.integrate([v for v in vertices if v.claimant is None])
 
     print("Final Cleaning pass")
     HCLEAN.clean_edges()
@@ -65,6 +70,7 @@ class Hull:
     current_index = -1
     convex_hull = []
     alive = False
+    radius = float('inf')
 
     def ch(self, i):
         return self.convex_hull[i % len(self.convex_hull)]
@@ -85,18 +91,21 @@ class Hull:
         if self.vertex_list[0].claimant is not None and self.vertex_list[0].claimant == self.vertex_list[1].claimant == self.vertex_list[2].claimant: return
 
         self.convex_hull = HDCEL.get_triangle(self.vertex_list[0], self.vertex_list[1], self.vertex_list[2])
+        self.radius = max([get_distance(self.origin, self.vertex_list[0]), get_distance(self.origin, self.vertex_list[1]), get_distance(self.origin, self.vertex_list[2])])
 
         for h in hulls:
-            for i in range(len(h.convex_hull)):
-                if segment_intersect(h.ch(i), h.ch(i+1), self.convex_hull[0], self.convex_hull[1], strict=False): return
-                if segment_intersect(h.ch(i), h.ch(i+1), self.convex_hull[1], self.convex_hull[2], strict=False): return
-                if segment_intersect(h.ch(i), h.ch(i+1), self.convex_hull[2], self.convex_hull[0], strict=False): return
+            if circle_intersect(self.origin, self.radius, h.origin, h.radius):
+                for i in range(len(h.convex_hull)):
+                    if segment_intersect(h.ch(i), h.ch(i+1), self.convex_hull[0], self.convex_hull[1], strict=False): return
+                    if segment_intersect(h.ch(i), h.ch(i+1), self.convex_hull[1], self.convex_hull[2], strict=False): return
+                    if segment_intersect(h.ch(i), h.ch(i+1), self.convex_hull[2], self.convex_hull[0], strict=False): return
 
         self.vertex_list[0].claimant = self
         self.vertex_list[1].claimant = self
         self.vertex_list[2].claimant = self
         self.current_index = 2
         self.alive = True
+
         hulls.append(self)
 
     def grow(self):
@@ -118,9 +127,36 @@ class Hull:
             else:
                 self.convex_hull[i+1:j] = [v]
             v.claimant = self
+            self.radius = get_distance(self.origin, v)
+
 
         for i in range(len(self.convex_hull)):
             self.ch(i).connect_to(self.ch(i+1))
+
+def circle_intersect(c1, r1, c2, r2):
+    return get_distance(c1, c2) <= (r1-r2)**2
+
+def sq_edge_point_dist(a, b, p):
+    dx = b.x() - a.x()
+    dy = b.y() - a.y()
+    dr2 = float(dx ** 2 + dy ** 2)
+
+    lerp = ((p.x() - a.x()) * dx + (p.y() - a.y()) * dy) / dr2
+    if lerp < 0:
+        lerp = 0
+    elif lerp > 1:
+        lerp = 1
+
+    x = lerp * dx + a.x()
+    y = lerp * dy + a.y()
+
+    _dx = x - p.x()
+    _dy = y - p.y()
+    square_dist = _dx ** 2 + _dy ** 2
+    return square_dist
+
+def edge_circle_intersect(c, r, e1, e2):
+    return sq_edge_point_dist(e1, e2, c) <= r
 
 def center(a, b, c):
     """ Returns centroid (geometric center) of a triangle abc """
@@ -133,7 +169,7 @@ def isLeftOf(a, b, v, strict=False):
     if strict: return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
     return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) >= 0
 
-def isVisible(i, v, master, strict=True):
+def isVisible(i, v, master, strict=False): #NOTE: Switched strict from True to False due to some endless loop in 5k instance.
     """ Returns true if the i'th segment of the convex_hull is visible from v """
     return not isLeftOf(master.ch(i), master.ch(i+1), v, strict)
 
@@ -190,7 +226,7 @@ def segment_intersect(l1, l2, g1, g2, strict=True):
 
 def occluded(v, left, right, target):
     for h in hulls:
-        if h!=target:
+        if h!=target and (edge_circle_intersect(h.origin, h.radius, v, left) or edge_circle_intersect(h.origin, h.radius, v, right)):
             for i in range(len(h.convex_hull)):
                 if segment_intersect(h.ch(i), h.ch(i+1), v, left, strict=False): return True
                 if segment_intersect(h.ch(i), h.ch(i+1), v, right, strict=False): return True

@@ -46,6 +46,18 @@ def get_all_areas(verts):
     return areas
 
 
+def integrate(stray_points):
+    print(str(len(stray_points))+" stray points detected.")
+    for p in stray_points:
+        a = get_surrounding_area(p)
+        integrate_into_area(p, a)
+
+def integrate_into_area(p, edgelist):
+    last_edge = p.connect_to(edgelist[0].origin)
+    for e in edgelist[1:]:
+        if HDCEL.angle(last_edge, e.origin) >= 180:
+            last_edge = p.connect_to(e.origin)
+
 def get_single_area(e):
     oe = e
     area = []
@@ -59,18 +71,30 @@ def get_single_area(e):
 
     return (oe, len(inflexes)==0, area, inflexes)
 
+def get_surrounding_area(p):
+    le = HDCEL.get_full_edge_list()
+    #TODO: sort edges by distance to point?
+    for e in le:
+        a = get_single_area(e)[2]
+        if point_in_area(a, p): return a
+    return None
+
+def point_in_area(edgelist, p):
+    for e in edgelist:
+        if isLeftOf(e.origin, e.nxt.origin, p, strict=True):
+            return False
+    return True
+
 
 def run(verts):
     areas = get_all_areas(verts)
 
     while len(areas)>1:
-        print(len(areas), end='')
+        print("\r"+str(len(areas)), end='')
         (e, convex, edges, inflexes) = areas.pop(0)
         if convex:
             continue
         else:
-            #resolve_inflex(inflexes[0], edges, areas)
-            #resolve_inflex(inflexes[0], get_single_area(inflexes[0])[2], areas)
             for i in inflexes:
                 resolve_inflex(i, get_single_area(i)[2], areas)
 
@@ -119,7 +143,6 @@ def resolve_inflex(inflex, edges, areas):
         return
 
     else:
-        print("to the back of the queue!")
         return
 
 
