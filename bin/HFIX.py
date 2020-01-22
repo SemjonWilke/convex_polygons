@@ -3,6 +3,19 @@ from HDCEL import Vertex
 import HVIS
 import HCLEAN
 
+def get_all_islands(verts):
+    master = HDCEL.get_convex_hull(verts)[0]
+    master.recursive_mark(1)
+
+    islands = []
+    le = [e for e in HDCEL.get_full_edge_list() if not e.origin.marked]
+    while len(le)>0:
+        e = le[0]
+        islands.append(e)
+        e.origin.recursive_mark(2)
+        le = [e for e in le if not e.origin.marked]
+    return islands
+
 
 def getEdge(a, b):
     e = a.incidentEdge
@@ -19,6 +32,15 @@ def isLeftOf(a, b, v, strict=False):
     if strict: return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
     return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) >= 0
 
+def isRightOf(a, b, v, strict=False):
+    return not isLeftOf(a, b, v, strict=not strict)
+
+def sortByDistance(vlist, p):
+    """ Sorts a list of vertices by euclidean distance towards a reference vertex p """
+    rlist = vlist.copy()
+    rlist.sort(key=lambda x: get_distance(x, p))
+    return rlist
+
 
 def get_all_areas(verts):
     le = HDCEL.get_full_edge_list()
@@ -30,6 +52,7 @@ def get_all_areas(verts):
     areas = []
 
     while len(le)>1:
+        print("\r"+str(len(le)), end='')
         oe = e = le.pop(0)
         area = []
         inflexes = []
@@ -44,6 +67,28 @@ def get_all_areas(verts):
 
         areas.append((oe, len(inflexes)==0, area, inflexes))
     return areas
+
+def integrate_island(edge_on_island, vertices):
+    island_edges = get_single_area(edge_on_island)[2]
+
+    for edge_on_island in island_edges:
+        verts = sortByDistance(vertices, edge_on_island.origin) # we'll just sort by distance to this point why not
+        for v in verts:
+            if v.claimant is not None and v.marked==1:
+                if can_place_edge(edge_on_island.origin, v):
+                    edge_on_island.origin.connect_to(v)
+                    print("Island integrated.")
+                    return
+    print("ERR: Could not integrate island.")
+
+
+# Use this sparingly as it runs poorly
+def can_place_edge(a, b):
+    edges = HDCEL.get_edge_list()
+    for i in range(len(edges)):
+        if segment_intersect(edges[i].origin, edges[i].nxt.origin, a, b, strict=True):
+            return False
+    return True
 
 
 def integrate(stray_points):
@@ -79,7 +124,7 @@ def get_surrounding_area(p):
         if point_in_area(a, p): return a
     return None
 
-def point_in_area(edgelist, p):
+def point_in_area(edgelist, p): #Note: only works for convex areas.
     for e in edgelist:
         if isLeftOf(e.origin, e.nxt.origin, p, strict=True):
             return False
@@ -87,7 +132,9 @@ def point_in_area(edgelist, p):
 
 
 def run(verts):
+    print("Acquiring all areas... ", end="")
     areas = get_all_areas(verts)
+    print("Done")
 
     while len(areas)>1:
         print("\r"+str(len(areas)), end='')
@@ -99,13 +146,14 @@ def run(verts):
                 resolve_inflex(i, get_single_area(i)[2], areas)
 
 def resolve_inflex(inflex, edges, areas):
-    if not isLeftOf(inflex.prev.origin, inflex.origin, inflex.nxt.origin, strict=True):
-        return
+    if isRightOf(inflex.prev.origin, inflex.origin, inflex.nxt.origin, strict=False): return # This is not an inflex -> dont care
 
     ie = inflex
     e = bisect(ie, edges)
 
-    #if e is None: return
+    if e is None:
+        print("ERR: Bisection Failed!")
+        return
 
     p1 = e.origin
     p2 = e.nxt.origin
@@ -113,13 +161,14 @@ def resolve_inflex(inflex, edges, areas):
     p1_valid = p2_valid = False
     p1_strong = p2_strong = False
 
+    # TODO: Are there cases were the "isRightOf"s *should* be strict?
     if ie.nxt.origin!=p1 and coll(ie.origin, p1, edges)[1] >= get_distance(ie.origin, p1):
         p1_valid = True
-        if not isLeftOf(ie.prev.origin, ie.origin, p1) and not isLeftOf(ie.origin, ie.nxt.origin, p1): p1_strong = True
+        if isRightOf(ie.prev.origin, ie.origin, p1, strict=False) and isRightOf(ie.origin, ie.nxt.origin, p1, strict=False): p1_strong = True
 
     if ie.prev.origin!=p2 and coll(ie.origin, p2, edges)[1] >= get_distance(ie.origin, p2):
         p2_valid = True
-        if not isLeftOf(ie.prev.origin, ie.origin, p2) and not isLeftOf(ie.origin, ie.nxt.origin, p2): p2_strong = True
+        if isRightOf(ie.prev.origin, ie.origin, p2, strict=False) and isRightOf(ie.origin, ie.nxt.origin, p2, strict=False): p2_strong = True
 
     if p1_strong:
         u = ie.origin.connect_to(p1)
@@ -162,7 +211,10 @@ def segment_intersect(l1, l2, g1, g2, strict=False):
     return isLeftOf(l1, l2, g1) != isLeftOf(l1, l2, g2) and isLeftOf(g1, g2, l1) != isLeftOf(g1, g2, l2)
 
 def coll(origin, dir, edges):
-    dir = origin.add(HDCEL.Vertex((dir.x()-origin.x())*1000000, (dir.y()-origin.y())*1000000))
+    dir = HDCEL.Vertex(dir.x()-origin.x(), dir.y()-origin.y())
+    dir = dir.mul(2000000) #NOTE: Normalizing dir before multiplying breaks the program and I dont know why.
+    dir = origin.add(dir)
+
     min_dist = float('inf')
     min_e = None
 
@@ -174,15 +226,15 @@ def coll(origin, dir, edges):
                 min_e = e
 
     #assert(min_e is not None)
-    if min_e is None:
-        HVIS.drawSingleTEdge(origin, dir, color="r")
-        for e in edges:
-            HVIS.drawSingleEdge(e, color="k", width=1)
-        HVIS.show()
+    #if min_e is None:
+    #    HVIS.drawSingleTEdge(origin, dir, color="r")
+    #    for e in edges:
+    #        HVIS.drawSingleEdge(e, color="k", width=1)
+    #    HVIS.show()
 
     return min_e, min_dist
 
-def bisect(inflex, edges, weird=False):
+def bisect(inflex, edges):
     g1 = inflex.to_vector().normalized().mul(-1)
     g2 = inflex.prev.to_vector().normalized()
 

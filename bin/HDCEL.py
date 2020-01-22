@@ -3,9 +3,13 @@ import math
 # Sample data for testing
 points = []
 
-def isLeftOf(a, b, v):
-    """ (Orient.test) Returns true if v is to the left of a line from a to b. Otherwise false. """
+def isLeftOf(a, b, v, strict=False):
+    if strict: return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
     return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) >= 0
+
+def isRightOf(a, b, v, strict=False):
+    if strict: return not isLeftOf(a, b, v, strict=False)
+    return not isLeftOf(a, b, v, strict=True)
 
 # Returns angle between an edge and a hypothetical origin-to-c edge
 def angle(edge, c):
@@ -43,6 +47,13 @@ class Vertex:
     occupied = False
     on_hull = False
     claimant = None
+    marked = 0
+
+    def recursive_mark(self, v):
+        self.marked = v
+        for e in self.get_connected_edges():
+            if not e.nxt.origin.marked:
+                e.nxt.origin.recursive_mark(v)
 
     def magnitude(self):
         assert(math.sqrt(self.x()**2 + self.y()**2)>0.0001)
@@ -152,6 +163,7 @@ class Vertex:
             chain(self.incidentEdge, v.incidentEdge)
             chain(v.incidentEdge, self.incidentEdge)
             twin(self.incidentEdge, v.incidentEdge)
+            assert(self.incidentEdge.nxt.origin==v)
             return self.incidentEdge
 
         if(v.incidentEdge is None):
@@ -344,7 +356,7 @@ def print_vertex(v):
             if(e==v.incidentEdge): break
 
 def make_triangle(a, b, c):
-    if not isLeftOf(a, b, c):
+    if isRightOf(a, b, c):
         a, b, c = a, c, b
 
     a.incidentEdge = Edge(a, None, None)
@@ -370,7 +382,7 @@ def make_triangle(a, b, c):
     return [a,b,c]
 
 def get_triangle(a, b, c):
-    if not isLeftOf(a, b, c):
+    if isRightOf(a, b, c):
         a, b, c = a, c, b
     return [a, b, c]
 
