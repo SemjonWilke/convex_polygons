@@ -54,6 +54,8 @@ def writeCheck(filename, status, points):
     except:
         exit(1)
 
+    print(status.get_message())
+
     data['meta']['checker_feasible'] = str(status.is_feasible())
     data['meta']['checker_msg'] = str(status.get_message())
     data['meta']['checker_obj_val'] = str(status.get_objective_value())
