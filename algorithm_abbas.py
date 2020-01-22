@@ -108,7 +108,7 @@ def connect_2_hulls(inner_hull, outer_hull):
             vertices[conv_hulls[outer_hull][_l]].connect_to(vertices[conv_hulls[inner_hull][0]])
             if _l == 0 and _h == len(conv_hulls[outer_hull])-1:
                 vertices[conv_hulls[outer_hull][_l+1]].connect_to(vertices[conv_hulls[inner_hull][0]])
-                vertices[conv_hulls[outer_hull][_h]].connect_to(vertices[conv_hulls[inner_hull][0]])
+                vertices[conv_hulls[outer_hull][_h-1]].connect_to(vertices[conv_hulls[inner_hull][0]])
             else:
                 while v2nd_isLeftOf( DCEL.points[conv_hulls[inner_hull][0]],
                         DCEL.points[conv_hulls[outer_hull][_l]],
