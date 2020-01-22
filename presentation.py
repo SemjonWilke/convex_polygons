@@ -24,7 +24,7 @@ def exithandler(sig, frame):
     print('Exiting')
     exit(3)
 
-def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm="", startpoints=None):
+def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm="", startpoints=None, explicit=0):
     global convex_hull, points, indices, vertices # make convex_hull algorithm specific
 
     start_t = HCOMMON.snaptime()
@@ -40,7 +40,7 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm="", sta
         algorithm_ben_v2.run(_vertices=vertices, _startpoints=startpoints, _verbose=verbose)
 
     if algorithm == "ben_v3":
-        algorithm_ben_v3.run(_vertices=vertices, _startpoints=startpoints, _verbose=verbose)
+        algorithm_ben_v3.run(_vertices=vertices, _startpoints=startpoints, _verbose=verbose, _explicit=explicit)
 
     if algorithm == "abbas":
         algorithm_abbas.run(verbose, vertices)
@@ -72,6 +72,7 @@ if __name__ == '__main__':
         parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help='Print human readable information')
         parser.add_argument('-a', '--algorithm', type=str, dest='algorithm', default="ben_v1", choices=["ben_v1", "ben_v2", "ben_v3", "abbas"], help='choose algorithm to execute')
         parser.add_argument('-s', '--startpoints', type=str, dest='startpoints', help='Starting points for ben_v2 algorithm')
+        parser.add_argument('-e', '--explicit', type=int, default=0, dest='explicit', help='Amount of explicit starting points to take from startpoints argument')
         arguments = parser.parse_args()
 
         verbose = arguments.verbose
@@ -80,10 +81,10 @@ if __name__ == '__main__':
         HVIS.initVis()
         if arguments.coord != None:
             exitcode = run(arguments.file, arguments.coord, arguments.overwrite, \
-                            arguments.plot, arguments.algorithm, arguments.startpoints)
+                            arguments.plot, arguments.algorithm, arguments.startpoints, arguments.explicit)
         else:
             exitcode = run(arguments.file, HCOMMON.randomstart(points, arguments.rndm, verbose), \
-                            arguments.overwrite, arguments.plot, arguments.algorithm, arguments.startpoints)
+                            arguments.overwrite, arguments.plot, arguments.algorithm, arguments.startpoints, arguments.explicit)
         if exitcode != 0:
             exit(exitcode)
     except KeyboardInterrupt:
