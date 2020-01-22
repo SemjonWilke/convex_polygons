@@ -80,7 +80,6 @@ if __name__ == '__main__':
         parser.add_argument('-p', '--plot', action='store_true', dest='plot', help='Show plot')
         parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help='Print human readable information')
         parser.add_argument('-a', '--algorithm', type=str, dest='algorithm', default="ben_v1", choices=["ben_v1", "ben_v2", "ben_v3", "abbas"], help='choose algorithm to execute')
-        parser.add_argument('-k', '--kmeans', action='store_true', dest='kmeans', help='find clusters with kmeans')
         parser.add_argument('-s', '--startpoints', type=str, dest='startpoints', help='Starting points for ben_v2 algorithm')
         arguments = parser.parse_args()
 
@@ -88,9 +87,6 @@ if __name__ == '__main__':
         points,instance = HJSON.readTestInstance(arguments.file)
 
         HVIS.initVis()
-        if arguments.kmeans:
-            HCLUSTER.findClusterCenters(points, plot=arguments.plot, verbose=verbose)
-
         if arguments.coord != None:
             exitcode = run(arguments.file, arguments.coord, arguments.overwrite, \
                             arguments.plot, arguments.algorithm, arguments.startpoints)

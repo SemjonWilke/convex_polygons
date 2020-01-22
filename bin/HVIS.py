@@ -6,8 +6,6 @@ fig=None
 axs=None
 
 def col(color, degree, point, index):
-    #if kmeans != None: # TODO get kmeans from hcluster
-    #    return kcol[kmeans.predict([point])[0]]
     if degree == None:
         return color
     if degree[index] == 0 or degree[index] == 1:
@@ -30,11 +28,7 @@ def drawPoints(points, edges=None, color='r'):
     """
     degree = HCOMMON.pointdegree(edges,points)
     for i,val in enumerate(points):
-        axs[0].plot(val[0], val[1], color=col(color,degree,val,i), marker='o')
-    """if kmeans != None:
-        for i,c in enumerate(kmeans.cluster_centers_):
-            axs[0].plot(c[0], c[1], color='k', marker='o')
-            axs[0].plot(c[0], c[1], color=kcol[i], marker='P') """# TODO get kcol from kmeans in HCLUSTER
+        axs.plot(val[0], val[1], color=col(color,degree,val,i), marker='o')
 
 def drawEdges(edges, points, color='b-'):
     """ draws edges to plt
@@ -42,11 +36,10 @@ def drawEdges(edges, points, color='b-'):
                 points as dictionary of lists 'x' and 'y'
                 color of edges (matplotlib style)
     """
-    #if kmeans == None: # TODO get kmeans from hcluster
     for index,val in enumerate(edges['in']):
         i = edges['in'][index]
         j = edges['out'][index]
-        axs[0].plot(
+        axs.plot(
             [points[i][0], points[j][0]],
             [points[i][1], points[j][1]],
             color
@@ -54,28 +47,28 @@ def drawEdges(edges, points, color='b-'):
 
 def drawHull():
     for i in range(len(convex_hull)):
-        axs[0].plot([ch(i).x(), ch(i+1).x()], [ch(i).y(), ch(i+1).y()], 'r-')
+        axs.plot([ch(i).x(), ch(i+1).x()], [ch(i).y(), ch(i+1).y()], 'r-')
 
 def drawSingleEdge(e, color='b', width=4):
-    axs[0].plot([e.origin.x(), e.nxt.origin.x()], [e.origin.y(), e.nxt.origin.y()], color+'-', linewidth=width)
+    axs.plot([e.origin.x(), e.nxt.origin.x()], [e.origin.y(), e.nxt.origin.y()], color+'-', linewidth=width)
 
 def drawSingleTEdge(p1, p2, color='b', width=4):
-    axs[0].plot([p1.x(), p2.x()], [p1.y(), p2.y()], color+'-', linewidth=width)
+    axs.plot([p1.x(), p2.x()], [p1.y(), p2.y()], color+'-', linewidth=width)
 
 def drawVector(v, origin=None, color='k', width=2):
     if origin is None: axs[0].plot([0, v.x()], [0, v.y()], color+'-', linewidth=width)
-    else: axs[0].plot([origin.x(), origin.x()+v.x()], [origin.y(), origin.y()+v.y()], color+'-', linewidth=width)
+    else: axs.plot([origin.x(), origin.x()+v.x()], [origin.y(), origin.y()+v.y()], color+'-', linewidth=width)
 
 def drawSingleHEdge(inp, outp, color='b'):
-    axs[0].plot([points[inp][0], points[outp][0]], [points[inp][1], points[outp][1]], color+'-')
+    axs.plot([points[inp][0], points[outp][0]], [points[inp][1], points[outp][1]], color+'-')
 
 def drawSinglePoint(v):
-    axs[0].plot(v.x(), v.y(), 'ks')
+    axs.plot(v.x(), v.y(), 'ks')
 
 def initVis():
     global fig
     global axs
-    fig,axs = plt.subplots(2)
+    fig,axs = plt.subplots(1)
     return fig,axs
 
 def show():
