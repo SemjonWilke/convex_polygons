@@ -15,7 +15,7 @@ vertices = []
 hulls = []
 verbose = False
 
-def run(_vertices, _startpoints, _verbose):
+def run(_vertices, _startpoints, _verbose, _explicit):
     global vertices, verbose
     vertices = _vertices
     verbose = _verbose
@@ -27,36 +27,47 @@ def run(_vertices, _startpoints, _verbose):
     else:
         if verbose: print("Startpoints: " + _startpoints)
         l = readStartPoints(_startpoints)
-        starting_points = [Vertex(explicit_x=l[i][0], explicit_y=l[i][1]) for i in range(len(l))]
+        starting_points = [Vertex(explicit_x=l[i][0], explicit_y=l[i][1]) for i in range(min(len(l), _explicit))]
 
     # First pass
-    print("First pass")
+    print("First pass...")
     for i in range(len(starting_points)):
         h = Hull(starting_points[i])
         h.grow()
         print("\r"+str(int(100*i/len(starting_points)))+"%", end='')
+    print("Done")
 
     # Second pass
-    print("Second pass")
+    print("Second pass...")
     for i in range(len(vertices)):
         if vertices[i].claimant is None:
             h = Hull(vertices[i])
             h.grow()
         print("\r"+str(int(100*i/len(vertices)))+"%", end='')
+    print("Done")
 
-    ## Convex hull
-    print("Outer hull")
+    # Convex hull
+    print("Outer hull...")
     HDCEL.form_convex_hull(vertices)
+    print("Done")
+
+    # Integrate Islands
+    islands = HFIX.get_all_islands(vertices)
+    print(str(len(islands)) + " Islands detected.")
+    for island in islands:
+        HFIX.integrate_island(island, vertices)
+
 
     # Clean
-    print("Cleaning pass")
-    HCLEAN.clean_edges()
+    #print("Cleaning pass...")
+    #HCLEAN.clean_edges()
+    #print("Done")
 
-    print("Final pass")
+    print("Resolve pass...")
     HFIX.run(vertices)
 
     print("Integrating stray points")
-    HFIX.integrate([v for v in vertices if v.claimant is None])
+    HFIX.integrate([v for v in vertices if v.incidentEdge is None])
 
     print("Final Cleaning pass")
     HCLEAN.clean_edges()
@@ -89,6 +100,9 @@ class Hull:
 
         # First check if we can at least make a triangle at this location. If we can't we may as well toss this iterator
         if self.vertex_list[0].claimant is not None and self.vertex_list[0].claimant == self.vertex_list[1].claimant == self.vertex_list[2].claimant: return
+
+        # Three colinear points do not make a triangle.
+        if are_colinear(self.vertex_list[0], self.vertex_list[1], self.vertex_list[2]): return
 
         self.convex_hull = HDCEL.get_triangle(self.vertex_list[0], self.vertex_list[1], self.vertex_list[2])
         self.radius = max([get_distance(self.origin, self.vertex_list[0]), get_distance(self.origin, self.vertex_list[1]), get_distance(self.origin, self.vertex_list[2])])
@@ -126,6 +140,7 @@ class Hull:
                 self.convex_hull[0:j] = []
             else:
                 self.convex_hull[i+1:j] = [v]
+
             v.claimant = self
             self.radius = get_distance(self.origin, v)
 
@@ -169,9 +184,16 @@ def isLeftOf(a, b, v, strict=False):
     if strict: return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
     return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) >= 0
 
-def isVisible(i, v, master, strict=False): #NOTE: Switched strict from True to False due to some endless loop in 5k instance.
+def isRightOf(a, b, v, strict=False):
+    if strict: return not isLeftOf(a, b, v, strict=False)
+    return not isLeftOf(a, b, v, strict=True)
+
+def are_colinear(a, b, c):
+    return isLeftOf(a, b, c, strict=False) and isRightOf(a, b, c, strict=False)
+
+def isVisible(i, v, master, strict=True):
     """ Returns true if the i'th segment of the convex_hull is visible from v """
-    return not isLeftOf(master.ch(i), master.ch(i+1), v, strict)
+    return isRightOf(master.ch(i), master.ch(i+1), v, strict)
 
 def getSomeVisibleSegment(v, master):
     """ Returns index of some segment on the convex hull visible from v """
