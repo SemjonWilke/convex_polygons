@@ -49,20 +49,11 @@ def run(filename, c=(6000, 4500), overwrite=False, plot=False, algorithm="", sta
     edges = HDCEL.get_edge_dict(verbose)
     HCOMMON.snapshoot(start_t, "Computation", verbose)
 
-    #written = 1
-    '''do not turn on this command when the second approach is active, to avoid losing the start point of pest solution, as there is no start point involved in the second approach'''
     written = HJSON.writeTestSolution(filename,instance,c,edges,overwrite,algorithm)
 
     if plot:
         start_t = HCOMMON.snaptime()
         HVIS.drawEdges(edges,points)
-        if not algorithm:
-            for index,conv in enumerate(conv_hulls):
-                for i in range(len(conv)-1):
-                    color=["m","r","g"]
-                    #HVIS.drawSingleHEdge(conv[i], conv[i+1], color[index % 3])
-                    #TODO change SingleHEdge to use HDCEL.Edge lkasd
-                    #TODO plot only if edge lkasd exists
         HVIS.drawPoints(points,edges)
         HCOMMON.snapshoot(start_t, "Plotting", verbose)
         HVIS.show()
