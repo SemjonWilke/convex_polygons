@@ -17,6 +17,7 @@ def getmeta(filename, edges, coord, alg):
     edgenumbetter = 0
     degavgov = degavg
     degmaxov = degmax
+    checker_feasible = True
     try:
         solutionfp = open(filename, 'r')
     except:
@@ -33,13 +34,16 @@ def getmeta(filename, edges, coord, alg):
         except: pass
         try: degmaxov = max(int(data['meta']['degree_max_overall']), degmaxov)
         except: pass
+        try: cf = ("True" == data['meta']['checker_feasible'])
+        except: cf = True
         solutionfp.close()
-    return { 'comment' : "Solution by Students of FU Berlin", 'iteration' : str(iteration),
+    return cf, \
+           { 'comment' : "Solution by Students of FU Berlin", 'iteration' : str(iteration),
              'coordinates' : str(coord), 'edges' : str(edgenum), 'degree_avg' : str(degavg),
              'deg_max' : str(degmax), 'edges_better' : str(edgenumbetter),
              'degree_avg_overall' : str(degavgov), 'degree_max_overall' : str(degmaxov),
              'algorithm' : alg, 'authors': ["Konstantin Jaehne", "Benjamin Kahl",
-                                            "Semjon Kerner", "Abbas Mohammed Murrey"] }
+                                            "Semjon Kerner", "Abbas Mohammed Murrey"]}
 
 def writeTestSolution(filename, instance, coord, edges=[], overwrite=False, algorithm="ben_v1"):
     """ writes edges to a solution file
@@ -50,8 +54,14 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False, algo
 
     filename = "solutions/" + filename.split("/",1)[-1] # fix path
     filename = filename.split(".",1)[0] + ".solution.json" # substitute "instance" with "solution"
-    meta = getmeta(filename, edges, coord, algorithm)
+    cf, meta = getmeta(filename, edges, coord, algorithm)
     better = int(meta['edges_better'])
+
+    try:
+        if (not cf): # if old solution is worse, overwrite
+            print("works?")
+            better = 1
+    except: pass
 
     fexist = True
     try:
