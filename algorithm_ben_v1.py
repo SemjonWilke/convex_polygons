@@ -42,21 +42,26 @@ def  center(a, b, c):
     avg_y = (a.y()+b.y()+c.y()) / 3
     return HDCEL.Vertex(explicit_x=avg_x, explicit_y=avg_y)
 
-def isLeftOf(a, b, v):
-    """ (Orient.test) Returns true if v is to the left of a line from a to b. Otherwise false. """
+def isLeftOf(a, b, v, strict=False):
+    if strict: return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
     return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) >= 0
 
-def isLeftOfEdge(e, v):
-    """ Same as above but takes an Edge as parameter instead of two points """
-    return isLeftOf(e.origin, e.nxt.origin, v)
+def isRightOf(a, b, v, strict=False):
+    return not isLeftOf(a, b, v, strict=not strict)
+
+def isLeftOfEdge(e, v, strict=False):
+    return isLeftOf(e.origin, e.nxt.origin, v, strict)
+
+def isRightOfEdge(e, v, strict=False):
+    return isLeftOf(e.origin, e.nxt.origin, v, strict)
 
 def isVisible(i, v):
     """ Returns true if the i'th segment of the convex_hull is visible from v """
-    return not isLeftOf(ch(i), ch(i+1), v)
+    return isRightOf(ch(i), ch(i+1), v, strict=True)
 
 def isVisibleEdge(e, v):
     """ Returns true if the i'th segment of the convex_hull is visible from v """
-    return not isLeftOf(e.origin, e.nxt.origin, v)
+    return isRightOf(e.origin, e.nxt.origin, v, strict=True)
 
 def getSomeVisibleSegment(v):
     """ Returns index of some segment on the convex hull visible from v """
@@ -128,8 +133,8 @@ def iterate(v):
     while isVisibleEdge(e, v):
         n = e.nxt
 
-        top_is_convex = not isLeftOfEdge(e.twin.prev, v)
-        bot_is_convex = not isLeftOfEdge(e.twin.nxt, v)
+        top_is_convex = isRightOfEdge(e.twin.prev, v, strict=False)
+        bot_is_convex = isRightOfEdge(e.twin.nxt, v, strict=False)
 
         e.origin.connect_to(v)
         if not isVisibleEdge(n, v):
