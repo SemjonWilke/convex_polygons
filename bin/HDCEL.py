@@ -449,5 +449,5 @@ def mark_depth_first(vertex, mark):
         v.mark = mark
 
         for e in v.get_connected_edges():
-            if v.nxt.origin.mark is not None:
+            if e.nxt.origin.mark is None:
                 queue.append(e.nxt.origin)
