@@ -388,6 +388,7 @@ def get_triangle(a, b, c):
 
 def sortByX(vlist):
     rlist = vlist.copy()
+    rlist.sort(key=lambda x: x.y()) # first sort by y
     rlist.sort(key=lambda x: x.x())
     return rlist
 

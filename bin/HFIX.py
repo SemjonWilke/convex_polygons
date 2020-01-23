@@ -208,7 +208,7 @@ def get_distance(v1, v2):
 # May require strcit=True for colinear points?
 def segment_intersect(l1, l2, g1, g2, strict=False):
     if len(set([l1,l2,g1,g2]))!=len([l1,l2,g1,g2]): return not strict
-    return isLeftOf(l1, l2, g1) != isLeftOf(l1, l2, g2) and isLeftOf(g1, g2, l1) != isLeftOf(g1, g2, l2)
+    return isLeftOf(l1, l2, g1, strict=True) != isLeftOf(l1, l2, g2, strict=True) and isLeftOf(g1, g2, l1, strict=True) != isLeftOf(g1, g2, l2, strict=True)
 
 def coll(origin, dir, edges):
     dir = HDCEL.Vertex(dir.x()-origin.x(), dir.y()-origin.y())

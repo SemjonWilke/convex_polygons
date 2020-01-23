@@ -10,6 +10,7 @@ from HJSON import readStartPoints
 import HMERGE
 import HCLEAN
 import HFIX
+import HVIS
 
 vertices = []
 hulls = []
@@ -56,7 +57,6 @@ def run(_vertices, _startpoints, _verbose, _explicit):
     print(str(len(islands)) + " Islands detected.")
     for island in islands:
         HFIX.integrate_island(island, vertices)
-
 
     # Clean
     #print("Cleaning pass...")
