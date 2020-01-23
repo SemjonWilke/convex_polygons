@@ -1,9 +1,10 @@
 import json
 
 import HCOMMON
+import HCHECK
 
 points = []
-verbose = True
+verbose = False
 
 def getmeta(filename, edges, coord, alg):
 
@@ -17,7 +18,6 @@ def getmeta(filename, edges, coord, alg):
     edgenumbetter = 0
     degavgov = degavg
     degmaxov = degmax
-    checker_feasible = True
     try:
         solutionfp = open(filename, 'r')
     except:
@@ -34,11 +34,8 @@ def getmeta(filename, edges, coord, alg):
         except: pass
         try: degmaxov = max(int(data['meta']['degree_max_overall']), degmaxov)
         except: pass
-        try: cf = ("True" == data['meta']['checker_feasible'])
-        except: cf = True
         solutionfp.close()
-    return cf, \
-           { 'comment' : "Solution by Students of FU Berlin", 'iteration' : str(iteration),
+    return { 'comment' : "Solution by Students of FU Berlin", 'iteration' : str(iteration),
              'coordinates' : str(coord), 'edges' : str(edgenum), 'degree_avg' : str(degavg),
              'deg_max' : str(degmax), 'edges_better' : str(edgenumbetter),
              'degree_avg_overall' : str(degavgov), 'degree_max_overall' : str(degmaxov),
@@ -54,14 +51,8 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False, algo
 
     filename = "solutions/" + filename.split("/",1)[-1] # fix path
     filename = filename.split(".",1)[0] + ".solution.json" # substitute "instance" with "solution"
-    cf, meta = getmeta(filename, edges, coord, algorithm)
+    meta = getmeta(filename, edges, coord, algorithm)
     better = int(meta['edges_better'])
-
-    try:
-        if (not cf): # if old solution is worse, overwrite
-            print("works?")
-            better = 1
-    except: pass
 
     fexist = True
     try:
@@ -69,9 +60,15 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False, algo
         fp.close()
     except:
         fexist = False
+        better = len(edges['in'])
 
-    if better > 0: # overwrite if its better else discard
+    if better > 0: # overwrite if its better and feasible else discard
         if verbose: print("Found a stronger solution by %s edges" % better)
+        status = HCHECK.liveChecker(points, edges, instance)
+        if verbose and not status.is_feasible(): print(status.get_message())
+        meta['checker_feasible'] = str(status.is_feasible())
+        meta['checker_msg'] = str(status.get_message())
+        meta['checker_obj_val'] = str(status.get_objective_value())
 
     data = {
         'type':'Solution',
@@ -86,7 +83,10 @@ def writeTestSolution(filename, instance, coord, edges=[], overwrite=False, algo
             'j': str(edges['out'][index]),}
         )
 
-    if not fexist or (fexist and better > 0 and overwrite):
+    try: stat = status.is_feasible()
+    except: stat = True
+
+    if stat and (not fexist or (fexist and better > 0 and overwrite)):
         with open(filename, 'w') as json_file:
             json.dump(data, json_file, indent=1)
         if verbose: print("Solution written to %s" % (filename))

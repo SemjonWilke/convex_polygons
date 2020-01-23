@@ -54,8 +54,6 @@ def writeCheck(filename, status, points):
     except:
         exit(1)
 
-    print(status.get_message())
-
     data['meta']['checker_feasible'] = str(status.is_feasible())
     data['meta']['checker_msg'] = str(status.get_message())
     data['meta']['checker_obj_val'] = str(status.get_objective_value())
@@ -64,6 +62,18 @@ def writeCheck(filename, status, points):
     json_file = open(filename, 'w')
     json.dump(data, json_file, indent=1)
     json_file.close()
+
+def liveChecker(points, edges, name):
+    checker = SolutionChecker()
+    inst = Instance(name=name)
+    for p in points:
+        inst.add_point(Point(p[0], p[1]))
+
+    sol = Solution(instance=name)
+    for i,e in enumerate(edges['in']):
+        sol.add_edge(Edge(edges['in'][i], edges['out'][i]))
+
+    return checker(instance=inst, solution=sol)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Bens Algorithm for SoCG')
