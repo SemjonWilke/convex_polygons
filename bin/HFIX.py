@@ -136,11 +136,8 @@ def get_single_area(e):
     while e.nxt!=oe:
         c += 1
         if c>2000:
-            print("Door stuck")
-            HVIS.drawSingleEdge(e)
-            if c>3000:
-                HVIS.drawSingleEdge(oe, color="r")
-                HVIS.show()
+            print("Endless loop")
+            return
 
         area.append(e)
         if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
