@@ -65,7 +65,7 @@ def run(_vertices, _startpoints, _verbose, _explicit):
 
     print("Resolve pass...")
     HFIX.run(vertices)
-
+    
     print("Integrating stray points")
     HFIX.integrate([v for v in vertices if v.incidentEdge is None])
 

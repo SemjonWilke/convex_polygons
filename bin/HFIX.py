@@ -90,12 +90,35 @@ def can_place_edge(a, b):
             return False
     return True
 
+def point_on_edge(p, e):
+    if isLeftOf(e.origin, e.nxt.origin, p, strict=True) or isRightOf(e.origin, e.nxt.origin, p, strict=True):
+        return False
+    # p and e are colinear.
+    em = get_distance(e.origin, e.nxt.origin)
+    return get_distance(e.origin, p) <= em and get_distance(e.nxt.origin, p) <= em
+
+def get_edge_below_point(p):
+    edges = HDCEL.get_edge_list()
+    for e in edges:
+        if point_on_edge(p, e): return e
+    return None
 
 def integrate(stray_points):
     print(str(len(stray_points))+" stray points detected.")
-    for p in stray_points:
-        a = get_surrounding_area(p)
-        integrate_into_area(p, a)
+    for i in range(len(stray_points)):
+        print("\r"+str(len(stray_points)-i), end="")
+        p = stray_points[i]
+
+        # Stray point is on top of an edge:
+        e = get_edge_below_point(p)
+        if e is not None:
+            e.origin.connect_to(p)
+            e.nxt.origin.connect_to(p)
+            e.remove()
+        # Stray point is inside of an area:
+        else:
+            a = get_surrounding_area(p)
+            integrate_into_area(p, a)
 
 def integrate_into_area(p, edgelist):
     last_edge = p.connect_to(edgelist[0].origin)
@@ -108,7 +131,16 @@ def get_single_area(e):
     area = []
     inflexes = []
 
+    c = 0
     while e.nxt!=oe:
+        c += 1
+        if c>2000:
+            print("Door stuck")
+            HVIS.drawSingleEdge(e)
+            if c>3000:
+                HVIS.drawSingleEdge(oe, color="r")
+                HVIS.show()
+
         area.append(e)
         if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
         e = e.nxt

@@ -400,12 +400,12 @@ def get_convex_hull(verts):
 
     lower_hull = []
     for v in verts:
-        while len(lower_hull) >= 2 and cross(lower_hull[-2], lower_hull[-1], v) <= 0: lower_hull.pop()
+        while len(lower_hull) >= 2 and cross(lower_hull[-2], lower_hull[-1], v) < 0: lower_hull.pop()
         lower_hull.append(v)
 
     upper_hull = []
     for v in reversed(verts):
-        while len(upper_hull) >= 2 and cross(upper_hull[-2], upper_hull[-1], v) <= 0: upper_hull.pop()
+        while len(upper_hull) >= 2 and cross(upper_hull[-2], upper_hull[-1], v) < 0: upper_hull.pop()
         upper_hull.append(v)
 
     return lower_hull[:-1] + upper_hull[:-1]
