@@ -47,13 +47,7 @@ class Vertex:
     occupied = False
     on_hull = False
     claimant = None
-    marked = 0
-
-    def recursive_mark(self, v):
-        self.marked = v
-        for e in self.get_connected_edges():
-            if not e.nxt.origin.marked:
-                e.nxt.origin.recursive_mark(v)
+    mark = None
 
     def magnitude(self):
         assert(math.sqrt(self.x()**2 + self.y()**2)>0.0001)
@@ -446,3 +440,14 @@ def make_hull(vertices, inds):
             k = i -1
         chain(vertices[inds[i]].incidentEdge, vertices[inds[j]].incidentEdge)
         chain(vertices[inds[i]].incidentEdge.twin, vertices[inds[k]].incidentEdge.twin)
+
+def mark_depth_first(vertex, mark):
+    queue = [vertex]
+
+    while len(queue)>0:
+        v = queue.pop(0)
+        v.mark = mark
+
+        for e in v.get_connected_edges():
+            if v.nxt.origin.mark is not None:
+                queue.append(e.nxt.origin)

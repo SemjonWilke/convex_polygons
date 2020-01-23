@@ -5,15 +5,15 @@ import HCLEAN
 
 def get_all_islands(verts):
     master = HDCEL.get_convex_hull(verts)[0]
-    master.recursive_mark(1)
+    HDCEL.mark_depth_first(master, mark=1) # 1 shall signify that this vertex is part of the main congolomerate
 
     islands = []
-    le = [e for e in HDCEL.get_full_edge_list() if not e.origin.marked]
+    le = [e for e in HDCEL.get_full_edge_list() if e.origin.mark is None]
     while len(le)>0:
         e = le[0]
         islands.append(e)
-        e.origin.recursive_mark(2)
-        le = [e for e in le if not e.origin.marked]
+        HDCEL.mark_depth_first(e.origin, mark=2) # 2 shall signify that this vertex is part of an isolated island
+        le = [e for e in le if e.origin.mark is None]
     return islands
 
 
@@ -74,8 +74,9 @@ def integrate_island(edge_on_island, vertices):
     for edge_on_island in island_edges:
         verts = sortByDistance(vertices, edge_on_island.origin) # we'll just sort by distance to this point why not
         for v in verts:
-            if v.claimant is not None and v.marked==1:
+            if v.claimant is not None and v.mark==1:
                 if can_place_edge(edge_on_island.origin, v):
+                    HDCEL.mark_depth_first(edge_on_island.origin, mark=1) # Mark this island as mainland
                     edge_on_island.origin.connect_to(v)
                     print("Island integrated.")
                     return
