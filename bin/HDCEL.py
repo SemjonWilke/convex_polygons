@@ -342,12 +342,12 @@ class Edge:
 
 # Function to print information on a vertex. Useful for debugging
 def print_vertex(v):
-    print("Vertex: " + str(v.x()) + " : " + str(v.y()))
+    #print("Vertex: " + str(v.x()) + " : " + str(v.y()))
     e = v.incidentEdge
     while(True):
-            print(e)
-            e = e.twin.nxt
-            if(e==v.incidentEdge): break
+        #print(e)
+        e = e.twin.nxt
+        if(e==v.incidentEdge): break
 
 def make_triangle(a, b, c):
     if isRightOf(a, b, c):

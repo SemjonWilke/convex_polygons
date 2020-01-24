@@ -3,6 +3,8 @@ from HDCEL import Vertex
 import HVIS
 import HCLEAN
 
+verbose = False
+
 def get_all_islands(verts):
     master = HDCEL.get_convex_hull(verts)[0]
     HDCEL.mark_depth_first(master, mark=1) # 1 shall signify that this vertex is part of the main congolomerate
@@ -52,7 +54,7 @@ def get_all_areas(verts):
     areas = []
 
     while len(le)>1:
-        print("\r"+str(len(le)), end='')
+        if verbose: print("\r"+str(len(le)), end='')
         oe = e = le.pop(0)
         area = []
         inflexes = []
@@ -78,9 +80,9 @@ def integrate_island(edge_on_island, vertices):
                 if can_place_edge(edge_on_island.origin, v):
                     HDCEL.mark_depth_first(edge_on_island.origin, mark=1) # Mark this island as mainland
                     edge_on_island.origin.connect_to(v)
-                    print("Island integrated.")
+                    if verbose: print("Island integrated.")
                     return
-    print("ERR: Could not integrate island.")
+    if verbose: print("ERR: Could not integrate island.")
 
 
 # Use this sparingly as it runs poorly
@@ -105,9 +107,9 @@ def get_edge_below_point(p):
     return None
 
 def integrate(stray_points):
-    print(str(len(stray_points))+" stray points detected.")
+    if verbose: print(str(len(stray_points))+" stray points detected.")
     for i in range(len(stray_points)):
-        print("\r"+str(len(stray_points)-i), end="")
+        if verbose: print("\r"+str(len(stray_points)-i), end="")
         p = stray_points[i]
 
         # Stray point is on top of an edge:
@@ -136,7 +138,7 @@ def get_single_area(e):
     while e.nxt!=oe:
         c += 1
         if c>2000:
-            print("Endless loop")
+            if verbose: print("Endless loop")
             return
 
         area.append(e)
@@ -162,12 +164,12 @@ def point_in_area(edgelist, p): #Note: only works for convex areas.
 
 
 def run(verts):
-    print("Acquiring all areas... ", end="")
+    if verbose: print("Acquiring all areas... ", end="")
     areas = get_all_areas(verts)
-    print("Done")
+    if verbose: print("Done")
 
     while len(areas)>1:
-        print("\r"+str(len(areas)), end='')
+        if verbose: print("\r"+str(len(areas)), end='')
         (e, convex, edges, inflexes) = areas.pop(0)
         if convex:
             continue
@@ -182,7 +184,7 @@ def resolve_inflex(inflex, edges, areas):
     e = bisect(ie, edges)
 
     if e is None:
-        print("ERR: Bisection Failed!")
+        if verbose: print("ERR: Bisection Failed!")
         return
 
     p1 = e.origin

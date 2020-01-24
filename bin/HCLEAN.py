@@ -1,6 +1,8 @@
 import HDCEL
 import HVIS
 
+verbose = False
+
 def isLeftOf(a, b, v):
     return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
 
@@ -33,14 +35,14 @@ def clean_edges():
             e.remove()
             c += 1
 
-    print("Removed " + str(c) + " superfluous edges...")
+    if verbose: print("Removed " + str(c) + " superfluous edges...")
 
 def check_cross():
     edges = HDCEL.get_edge_list()
     for i in range(len(edges)):
         for j in range(i, len(edges)):
             if segment_intersect(edges[i].origin, edges[i].nxt.origin, edges[j].origin, edges[j].nxt.origin):
-                print("WARN: DETECTED CROSSING EDGES!")
+                if verbose: print("WARN: DETECTED CROSSING EDGES!")
                 HVIS.drawSingleEdge(edges[i], color="r", width=4)
                 HVIS.drawSingleEdge(edges[j], color="r", width=4)
                 return True

@@ -1,4 +1,5 @@
 import json
+import glob
 
 import HCOMMON
 import HCHECK
@@ -42,13 +43,15 @@ def getmeta(filename, edges, coord, alg):
              'algorithm' : alg, 'authors': ["Konstantin Jaehne", "Benjamin Kahl",
                                             "Semjon Kerner", "Abbas Mohammed Murrey"]}
 
-def writeTestSolution(filename, instance, coord, edges=[], overwrite=False, algorithm="ben_v1"):
+def writeTestSolution(filename, instance, coord, vbse, edges=[], overwrite=False, algorithm="ben_v1"):
     """ writes edges to a solution file
     input:      filename as string
                 instance name as string
                 list of edges by indices of points
     """
 
+    global verbose
+    verbose = vbse
     filename = "solutions/" + filename.split("/",1)[-1] # fix path
     filename = filename.split(".",1)[0] + ".solution.json" # substitute "instance" with "solution"
     meta = getmeta(filename, edges, coord, algorithm)
@@ -100,8 +103,21 @@ def readStartPoints(filename):
     input:      filename as string
     returns:    points as array of coordinates
     """
+    if filename == "":
+        return []
+
+    filename = "startpoints/" + filename.split("/",1)[-1] # fix path
+    filename = filename.split(".",1)[0] + ".sky-*.json" # substitute "instance" with "solution"
+
+    g = glob.glob(filename) # take the first existing startpoint file
+    if len(g) == 0:
+        return []
+    fp = g[0]
+
+    if verbose: print("Startpoints: " + fp)
+
     spoints = []
-    with open(filename) as json_file:
+    with open(fp) as json_file:
         data = json.load(json_file)
         for p in data['points']:
             spoints.append([int(p['x']), int(p['y'])]) # TODO does not work for float

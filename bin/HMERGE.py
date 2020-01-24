@@ -10,7 +10,7 @@ For a simple illustration check out this ms-paint: https://i.imgur.com/1KFsk3E.p
 Note:   'self.ch_i(x)' is equaivalent to x % len(self.convex_hull)
     and 'self.ch(x)' is equivalent to self.convex_hull[self.ch_i(x)]
 """
-def merge_Hulls(self, other, s_left, s_right, o_left, o_right):
+def merge_Hulls(self, other, s_left, s_right, o_left, o_right, verbose):
     # As a first step we create two lists s and o that contain the chain
     # of vertices that need to be joined on self and other respectively
 
@@ -39,11 +39,11 @@ def merge_Hulls(self, other, s_left, s_right, o_left, o_right):
     if self.ch_i(s_left)==self.ch_i(s_right) and len(o)<=2:
         i+=1
         s[i].connect_to(o[j])
-        print("WARN: Rare edge case during merge.")
+        if verbose: print("WARN: Rare edge case during merge.")
     elif other.ch_i(o_left)==other.ch_i(o_right) and len(s)<=2:
         j+=1
         s[i].connect_to(o[j])
-        print("WARN: Rare edge case during merge.")
+        if verbose: print("WARN: Rare edge case during merge.")
 
     # Advance i (self) if possible, otherwise j (other) and connect at each step.
     while 1:

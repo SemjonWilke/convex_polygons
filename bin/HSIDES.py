@@ -85,13 +85,14 @@ def get_intermediate_with_normal(static, fluid, static_i, fluid_i, fluid_q):
         explicit_y = (min_p.y() + min_q.y()) * 0.5 \
     )
     if fluid.intersects(inter, normal, isSegment=False): # Exceptions may trigger this. Sets partition line parellel to fluid_i
-        print("WARN: Unfair partition during merge.")
+        #print("WARN: Unfair partition during merge.")
         normal = Vertex(\
             explicit_x = inter.x() + fluid.ch(fluid_i+1).x() - fluid.ch(fluid_i).x(),\
             explicit_y = inter.y() + fluid.ch(fluid_i+1).y() - fluid.ch(fluid_i).y(), \
         )
         if fluid.intersects(inter, normal, isSegment=False):
-            print("ERR: Invalid partition.")
+            pass
+            #print("ERR: Invalid partition.")
     return inter, normal
 
 def intermediate_point(this, other):
