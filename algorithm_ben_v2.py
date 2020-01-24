@@ -18,7 +18,7 @@ active_iterators = []
 vertices = []
 verbose = False
 
-def run(_vertices, _startpoints, _verbose):
+def run(_vertices, _filename, _verbose, _explicit):
     global vertices, verbose
     vertices = _vertices
     verbose = _verbose
@@ -27,12 +27,11 @@ def run(_vertices, _startpoints, _verbose):
     vertices = [Vertex(index=i) for i in range(len(vertices))]
 
     startpoints = []
-    if _startpoints is None:
+    l = readStartPoints(_filename)
+    if l is [] or _explicit == 0:
         if verbose: print("Using random startpoints")
         starting_points = [Vertex(explicit_x=randint(0,14000), explicit_y=randint(0,8000)) for i in range(4)]
     else:
-        if verbose: print("Startpoints: " + _startpoints)
-        l = readStartPoints(_startpoints)
         starting_points = [Vertex(explicit_x=l[i][0], explicit_y=l[i][1]) for i in range(len(l))]
 
     for p in starting_points:
@@ -365,7 +364,7 @@ class Iterator:
         s_right = getCHIndex(srv, self)
         o_left = getCHIndex(olv, other)
         o_right = getCHIndex(orv, other)
-        HMERGE.merge_Hulls(self, other, s_left, s_right, o_left, o_right)
+        HMERGE.merge_Hulls(self, other, s_left, s_right, o_left, o_right, verbose)
 
         self.fix_hull(point_on_hull=self.ch(s_left), thorough=False)
         self.vertex_list[self.current_index+1:len(self.vertex_list)] = sortByDistanceToHull(self.vertex_list[self.current_index+1:len(self.vertex_list)], self)

@@ -16,45 +16,44 @@ vertices = []
 hulls = []
 verbose = False
 
-def run(_vertices, _startpoints, _verbose, _explicit):
+def run(_vertices, _filename, _verbose, _explicit):
     global vertices, verbose
     vertices = _vertices
     verbose = _verbose
 
-    startpoints = []
-    if _startpoints is None:
+    l = readStartPoints(_filename)
+    if len(l) == 0 or _explicit == 0:
         if verbose: print("Using random startpoints")
         starting_points = [Vertex(explicit_x=randint(0,14000), explicit_y=randint(0,8000)) for i in range(4)]
     else:
-        if verbose: print("Startpoints: " + _startpoints)
-        l = readStartPoints(_startpoints)
-        starting_points = [Vertex(explicit_x=l[i][0], explicit_y=l[i][1]) for i in range(min(len(l), _explicit))]
+        sp_len = int(len(l) * min((float(_explicit)/100.0), 1.0))
+        starting_points = [Vertex(explicit_x=l[i][0], explicit_y=l[i][1]) for i in range(sp_len)]
 
     # First pass
-    print("First pass...")
+    if verbose: print("First pass...")
     for i in range(len(starting_points)):
         h = Hull(starting_points[i])
         h.grow()
-        print("\r"+str(int(100*i/len(starting_points)))+"%", end='')
-    print("Done")
+        if verbose: print("\r"+str(int(100*i/len(starting_points)))+"%", end='')
+    if verbose: print("\rDone")
 
     # Second pass
-    print("Second pass...")
+    if verbose: print("Second pass...")
     for i in range(len(vertices)):
         if vertices[i].claimant is None:
             h = Hull(vertices[i])
             h.grow()
-        print("\r"+str(int(100*i/len(vertices)))+"%", end='')
-    print("Done")
+        if verbose: print("\r"+str(int(100*i/len(vertices)))+"%", end='')
+    if verbose: print("\rDone")
 
     # Convex hull
-    print("Outer hull...")
+    if verbose: print("Outer hull...")
     HDCEL.form_convex_hull(vertices)
-    print("Done")
+    if verbose: print("Done")
 
     # Integrate Islands
     islands = HFIX.get_all_islands(vertices)
-    print(str(len(islands)) + " Islands detected.")
+    if verbose: print(str(len(islands)) + " Islands detected.")
     for island in islands:
         HFIX.integrate_island(island, vertices)
 
@@ -63,13 +62,13 @@ def run(_vertices, _startpoints, _verbose, _explicit):
     #HCLEAN.clean_edges()
     #print("Done")
 
-    print("Resolve pass...")
+    if verbose: print("Resolve pass...")
     HFIX.run(vertices)
     
-    print("Integrating stray points")
+    if verbose: print("Integrating stray points")
     HFIX.integrate([v for v in vertices if v.incidentEdge is None])
 
-    print("Final Cleaning pass")
+    if verbose: print("Final Cleaning pass")
     HCLEAN.clean_edges()
 
     HCLEAN.check_cross()
@@ -133,7 +132,7 @@ class Hull:
 
             if abs(j-i) > 1: continue
             if occluded(v, self.ch(i), self.ch(j), self): continue
-            if abs(j-i) < 1: print("???")
+            if abs(j-i) < 1 and verbose: print("???")
 
             if j < i:
                 self.convex_hull[i+1:len(self.convex_hull)] = [v]
