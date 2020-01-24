@@ -59,11 +59,14 @@ def drawVector(v, origin=None, color='k', width=2):
     if origin is None: axs[0].plot([0, v.x()], [0, v.y()], color+'-', linewidth=width)
     else: axs.plot([origin.x(), origin.x()+v.x()], [origin.y(), origin.y()+v.y()], color+'-', linewidth=width)
 
-def drawSingleHEdge(inp, outp, color='b'):
+def drawSingleHEdge(inp, outp, points, color='b'):
     axs.plot([points[inp][0], points[outp][0]], [points[inp][1], points[outp][1]], color+'-')
 
 def drawSinglePoint(v):
     axs.plot(v.x(), v.y(), 'ks')
+
+def drawSingleHPoint(p, c='ks'):
+    axs.plot(p[0], p[1], c)
 
 def initVis():
     global fig
