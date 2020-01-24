@@ -3,6 +3,7 @@ from cgshop2020_pyutils import Instance, Point, Edge, Solution, SolutionChecker
 import argparse
 import json
 from scipy.spatial import ConvexHull #TODO maybe pass the convex hull via solution files
+import HVIS
 
 # load challenge instances
 def readInstance(filename):
@@ -32,7 +33,7 @@ def readSolution(filename, name):
         solution.add_edge(Edge(edge['i'], edge['j']))
 
     solutionfp.close()
-    return solution
+    return solution, data['edges']
 
 def score(edges, points):
     p = []
@@ -78,11 +79,28 @@ def liveChecker(points, edges, name):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Bens Algorithm for SoCG')
     parser.add_argument('file')
+    parser.add_argument('-p', '--plot', action='store_true', dest='plot', help='Show plot')
     arguments = parser.parse_args()
 
     checker = SolutionChecker()
     instance,name,points = readInstance(arguments.file)
-    solution = readSolution(arguments.file, name)
+    solution,edges = readSolution(arguments.file, name)
 
     status = checker(instance=instance, solution=solution)
     writeCheck(arguments.file, status, points)
+
+    print(status.get_message())
+    if (arguments.plot):
+        HVIS.initVis()
+        es = {"in":[],"out":[]}
+        for e in edges:
+            es["in"].append(int(e["i"]))
+            es["out"].append(int(e["j"]))
+        ps = []
+
+        for p in points:
+            ps.append([p["x"], p["y"]])
+
+        HVIS.drawEdges(es,ps)
+        HVIS.drawPoints(ps)
+        HVIS.show()
