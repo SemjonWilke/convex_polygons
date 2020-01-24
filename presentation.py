@@ -8,7 +8,7 @@ import math
 from collections import defaultdict
 
 sys.path.append('./bin')
-import HCLUSTER
+#import HCLUSTER
 import HCOMMON
 import HDCEL
 import HJSON
@@ -37,6 +37,7 @@ if __name__ == '__main__':
         parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', help='Print human readable information')
         parser.add_argument('-a', '--algorithm', type=str, dest='algorithm', default="ben_v1", choices=["ben_v1", "ben_v2", "ben_v3", "abbas"], help='choose algorithm to execute')
         parser.add_argument('-e', '--explicit', type=int, default=0, dest='explicit', help='Amount of explicit starting points to take from startpoints argument')
+        group.add_argument('-l', '--limit', type=int, nargs=2, dest='limit', help='Dont execute if amount of points is outside of limit')
         arg = parser.parse_args()
 
         # init ----------------------------------------------------------------
@@ -45,6 +46,11 @@ if __name__ == '__main__':
 
         start_t = HCOMMON.snaptime()
         points,instance = HJSON.readTestInstance(arg.file)
+        if arg.limit != None:
+            if len(points) < arg.limit[0] or len(points) > arg.limit[1]:
+                if arg.verbose: print("Error: outside of limit %d < %d < %d" % (arg.limit[0], len(points), arg.limit[1]))
+                exit(2)
+
         HDCEL.points = points
         vertices = [HDCEL.Vertex(index=i) for i in range(len(points))]
 
