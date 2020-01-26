@@ -11,6 +11,7 @@ from HEARTRIM import earTrimArea
 from HJSON import readStartPoints
 import HMERGE
 import HCLEAN
+from HDCEL import isLeftOf, isRightOf, isLeftOfEdge, isRightOfEdge
 
 seed(98765432)
 all_iterators = []
@@ -41,25 +42,11 @@ def run(_vertices, _filename, _verbose, _explicit):
 
     HCLEAN.clean_edges()
 
-def  center(a, b, c):
+def center(a, b, c):
     """ Returns centroid (geometric center) of a triangle abc """
     avg_x = (a.x()+b.x()+c.x()) / 3
     avg_y = (a.y()+b.y()+c.y()) / 3
     return Vertex(explicit_x=avg_x, explicit_y=avg_y)
-
-def isLeftOf(a, b, v, strict=False):
-    """ (Orient.test) Returns true if v is to the left of a line from a to b. Otherwise false. """
-    if strict: return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
-    return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) >= 0
-
-def isRightOf(a, b, v, strict=False):
-    """ (Orient.test) Returns true if v is to the right of a line from a to b. Otherwise false. """
-    if strict: return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) < 0
-    return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) <= 0
-
-def isLeftOfEdge(e, v):
-    """ Same as above but takes an Edge as parameter instead of two points """
-    return isLeftOf(e.origin, e.nxt.origin, v)
 
 def isVisible(i, v, master, strict=True):
     """ Returns true if the i'th segment of the convex_hull is visible from v """

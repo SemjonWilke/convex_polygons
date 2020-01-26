@@ -11,6 +11,7 @@ import HMERGE
 import HCLEAN
 import HFIX
 import HVIS
+from HDCEL import isLeftOf, isRightOf
 
 vertices = []
 hulls = []
@@ -64,7 +65,7 @@ def run(_vertices, _filename, _verbose, _explicit):
 
     if verbose: print("Resolve pass...")
     HFIX.run(vertices)
-    
+
     if verbose: print("Integrating stray points")
     HFIX.integrate([v for v in vertices if v.incidentEdge is None])
 
@@ -177,15 +178,6 @@ def center(a, b, c):
     avg_x = (a.x()+b.x()+c.x()) / 3
     avg_y = (a.y()+b.y()+c.y()) / 3
     return Vertex(explicit_x=avg_x, explicit_y=avg_y)
-
-def isLeftOf(a, b, v, strict=False):
-    """ (Orient.test) Returns true if v is to the left of a line from a to b. Otherwise false. """
-    if strict: return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
-    return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) >= 0
-
-def isRightOf(a, b, v, strict=False):
-    if strict: return not isLeftOf(a, b, v, strict=False)
-    return not isLeftOf(a, b, v, strict=True)
 
 def are_colinear(a, b, c):
     return isLeftOf(a, b, c, strict=False) and isRightOf(a, b, c, strict=False)

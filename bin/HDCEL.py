@@ -8,8 +8,13 @@ def isLeftOf(a, b, v, strict=False):
     return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) >= 0
 
 def isRightOf(a, b, v, strict=False):
-    if strict: return not isLeftOf(a, b, v, strict=False)
-    return not isLeftOf(a, b, v, strict=True)
+    return not isLeftOf(a, b, v, strict=not strict)
+
+def isLeftOfEdge(e, v, strict=False):
+    return isLeftOf(e.origin, e.nxt.origin, v, strict)
+
+def isRightOfEdge(e, v, strict=False):
+    return isLeftOf(e.origin, e.nxt.origin, v, strict)
 
 # Returns angle between an edge and a hypothetical origin-to-c edge
 def angle(edge, c):
