@@ -260,34 +260,29 @@ def get_edge_dict(verbose):
 
 def get_edge_list():
     global edge_list
-    _set = set()
+    e_list = []
     if edge_list._size != 0:
         _e = edge_list._head
-        while(True):
-            if _e.twin not in _set:
-                _set.add(_e)
+        while(_e != None):
+            if _e not in e_list and _e.twin not in e_list:
+                e_list.append(_e)
             _e = _e.succ
 
-            if(_e == None):
-                break
-
-        e_list = list(_set)
+        e_list.sort(key=lambda x:(x.origin.x(),x.prev.origin.x()))
         return e_list
     return []
 
 def get_full_edge_list():
     global edge_list
-    _set = set()
+    e_list = []
     if edge_list._size != 0:
         _e = edge_list._head
-        while(True):
-            _set.add(_e)
+        while(_e != None):
+            if _e not in e_list:
+                e_list.append(_e)
             _e = _e.succ
 
-            if(_e == None):
-                break
-
-        e_list = list(_set)
+        e_list.sort(key=lambda x:(x.origin.x(),x.prev.origin.x()))
         return e_list
     return []
 
