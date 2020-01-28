@@ -65,7 +65,7 @@ def run(_vertices, _filename, _verbose, _explicit):
 
     if verbose: print("Resolve pass...")
     HFIX.run(vertices)
-
+    
     if verbose: print("Integrating stray points")
     HFIX.integrate([v for v in vertices if v.incidentEdge is None])
 

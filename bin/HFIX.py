@@ -1,7 +1,8 @@
 import HDCEL
-from HDCEL import Vertex
+from HDCEL import Vertex, isLeftOf, isRightOf
 import HVIS
 import HCLEAN
+import math
 
 verbose = False
 
@@ -28,14 +29,6 @@ def getEdge(a, b):
     if i > 9999:
         if verbose: print("INFO: Points (%i,%i) not connected" % (a.i, b.i))
     return e # edge e between vertices a and b
-
-
-def isLeftOf(a, b, v, strict=False):
-    if strict: return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
-    return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) >= 0
-
-def isRightOf(a, b, v, strict=False):
-    return not isLeftOf(a, b, v, strict=not strict)
 
 def sortByDistance(vlist, p):
     """ Sorts a list of vertices by euclidean distance towards a reference vertex p """
@@ -264,7 +257,10 @@ def coll(origin, dir, edges):
     #        HVIS.drawSingleEdge(e, color="k", width=1)
     #    HVIS.show()
 
-    return min_e, min_dist
+    if min_dist < float('inf'):
+        return min_e, math.ceil(min_dist)
+    else:
+        return min_e, min_dist
 
 def bisect(inflex, edges):
     g1 = inflex.to_vector().normalized().mul(-1)
