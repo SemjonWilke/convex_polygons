@@ -8,7 +8,7 @@ import math
 from collections import defaultdict
 
 sys.path.append('./bin')
-import HCLUSTER
+#import HCLUSTER
 import HCOMMON
 import HDCEL
 import HJSON
@@ -46,6 +46,11 @@ if __name__ == '__main__':
 
         start_t = HCOMMON.snaptime()
         points,instance = HJSON.readTestInstance(arg.file)
+        if arg.limit != None:
+            if len(points) < arg.limit[0] or len(points) > arg.limit[1]:
+                if arg.verbose: print("Error: outside of limit %d < %d < %d" % (arg.limit[0], len(points), arg.limit[1]))
+                exit(2)
+
         HDCEL.points = points
         vertices = [HDCEL.Vertex(index=i) for i in range(len(points))]
 
