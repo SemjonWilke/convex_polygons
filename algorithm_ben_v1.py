@@ -2,7 +2,8 @@ import sys
 import math
 
 import HDCEL
-from HDCEL import isLeftOf, isRightOf, isLeftOfEdge, isRightOfEdge
+import HCLEAN
+from HDCEL import isLeftOf, isRightOf, isLeftOfEdge, isRightOfEdge, are_colinear
 
 convex_hull = []
 vertices = []
@@ -17,19 +18,40 @@ def run(_vertices, _origin, _verbose):
     if verbose: print("Start points are (%i|%i)" % (_origin.explicit_x, _origin.explicit_y))
     sortByDistance(vertices, _origin)
 
+    v1, v2, v3 = vertices[0], vertices[1], vertices[2]
+
     # Create the first triangle
-    if isLeftOf(vertices[0], vertices[1], vertices[2]):
-        convex_hull = [vertices[0], vertices[1], vertices[2]]
-        HDCEL.make_triangle(vertices[0], vertices[1], vertices[2])
+    it = 3
+    skipped = []
+    if are_colinear(v1, v2, v3): #Weirdo case: If three closest verts are colinear -> cant make triangle
+        if get_distance(v1, v2) < get_distance(v1, v3):
+            while are_colinear(v1, v2, v3):
+                skipped.append(v3)
+                v3 = vertices[it]
+                it += 1
+        else:
+            while are_colinear(v1, v2, v3):
+                skipped.append(v2)
+                v2 = vertices[it]
+                it += 1
+        # Found a non-colinear triple!
+        convex_hull = [v1, v2, v3]
+        HDCEL.make_triangle(v1, v2, v3)
+        for p in skipped:
+            iterate(p) # Catch up with the points we skipped
+    # Regular cases:
+    elif isLeftOf(v1, v2, v3):
+        convex_hull = [v1, v2, v3]
+        HDCEL.make_triangle(v1, v2, v3)
     else:
-        convex_hull = [vertices[0], vertices[2], vertices[1]]
-        HDCEL.make_triangle(vertices[0], vertices[2], vertices[1])
+        convex_hull = [v1, v3, v2]
+        HDCEL.make_triangle(v1, v3, v2)
 
     # Run iterations
-    for i in range(3, len(vertices)):
+    for i in range(it, len(vertices)):
         iterate(vertices[i])
         sys.stdout.flush()
-
+    HCLEAN.clean_edges()
 
 def ch(i):
     return convex_hull[i % len(convex_hull)]
@@ -53,30 +75,9 @@ def isVisibleEdge(e, v):
 
 def getSomeVisibleSegment(v):
     """ Returns index of some segment on the convex hull visible from v """
-    min = 0
-    max = len(convex_hull) - 1
-    i = math.ceil((max - min) / 2)
-
-    while max > min:
-        i = min + math.ceil((max - min) / 2)
+    for i in range(len(convex_hull)):
         if isVisible(i, v):
             return i
-
-        if isLeftOf(center(ch(0), ch(1), ch(2)), ch(i), v):
-            min = i + 1
-        else:
-            max = i - 1
-
-    if isVisible(max + 1, v):
-        return max + 1
-    if isVisible(max - 1, v):
-        return max - 1
-    if not isVisible(max, v):
-        if verbose: print("INFO: NON-VISIBLE-EDGE! Falling back to iterative result.")
-        for i in range(len(convex_hull)):
-            if isVisible(i, v):
-                return i
-    return max
 
 def getLeftMostVisibleIndex(v):
     """ Returns the index of vertex v on the convex hull furthest 'to the left' visible from v """
@@ -95,14 +96,11 @@ def sortByDistance(vlist, p):
     vlist.sort(key=lambda x: get_distance(x, p))
 
 def getEdge(a, b):
-    e = a.incidentEdge
-    i = 0 # guard to prevent endless loop, i is at most |V| with V = E
-    while e.nxt.origin != b and i <= len(vertices):
-        i += 1
-        e = e.twin.nxt
-    if i > len(vertices):
-        if verbose: print("INFO: Points (%i,%i) not connected" % (a.i, b.i))
-    return e # edge e between vertices a and b
+    for e in a.get_connected_edges():
+        if e.nxt.origin == b:
+            return e
+    if verbose: print("INFO: Points (%i,%i) not connected" % (a.i, b.i))
+    return None
 
 def update_convex_hull(i, j ,v):
     i = ch_i(i)

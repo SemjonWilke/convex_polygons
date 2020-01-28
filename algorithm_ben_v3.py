@@ -11,7 +11,7 @@ import HMERGE
 import HCLEAN
 import HFIX
 import HVIS
-from HDCEL import isLeftOf, isRightOf
+from HDCEL import isLeftOf, isRightOf, are_colinear
 
 vertices = []
 hulls = []
@@ -65,14 +65,14 @@ def run(_vertices, _filename, _verbose, _explicit):
 
     if verbose: print("Resolve pass...")
     HFIX.run(vertices)
-    
+
     if verbose: print("Integrating stray points")
     HFIX.integrate([v for v in vertices if v.incidentEdge is None])
 
     if verbose: print("Final Cleaning pass")
     HCLEAN.clean_edges()
 
-    HCLEAN.check_cross()
+    #HCLEAN.check_cross()
 
 
 class Hull:
@@ -178,9 +178,6 @@ def center(a, b, c):
     avg_x = (a.x()+b.x()+c.x()) / 3
     avg_y = (a.y()+b.y()+c.y()) / 3
     return Vertex(explicit_x=avg_x, explicit_y=avg_y)
-
-def are_colinear(a, b, c):
-    return isLeftOf(a, b, c, strict=False) and isRightOf(a, b, c, strict=False)
 
 def isVisible(i, v, master, strict=True):
     """ Returns true if the i'th segment of the convex_hull is visible from v """

@@ -257,6 +257,7 @@ def coll(origin, dir, edges):
     #        HVIS.drawSingleEdge(e, color="k", width=1)
     #    HVIS.show()
 
+    # We dont want to return actual floats if they are not infinite, as this will cause floating point issues.
     if min_dist < float('inf'):
         return min_e, math.ceil(min_dist)
     else:

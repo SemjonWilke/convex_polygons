@@ -14,7 +14,10 @@ def isLeftOfEdge(e, v, strict=False):
     return isLeftOf(e.origin, e.nxt.origin, v, strict)
 
 def isRightOfEdge(e, v, strict=False):
-    return isLeftOf(e.origin, e.nxt.origin, v, strict)
+    return isRightOf(e.origin, e.nxt.origin, v, strict=strict)
+
+def are_colinear(a, b, c):
+    return isLeftOf(a, b, c, strict=False) and isRightOf(a, b, c, strict=False)
 
 # Returns angle between an edge and a hypothetical origin-to-c edge
 def angle(edge, c):
