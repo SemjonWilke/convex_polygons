@@ -3,6 +3,7 @@ import math
 
 import HDCEL
 import HCLEAN
+import HVIS
 from HDCEL import isLeftOf, isRightOf, isLeftOfEdge, isRightOfEdge, are_colinear
 
 convex_hull = []
@@ -35,17 +36,17 @@ def run(_vertices, _origin, _verbose):
                 v2 = vertices[it]
                 it += 1
         # Found a non-colinear triple!
-        convex_hull = [v1, v2, v3]
-        HDCEL.make_triangle(v1, v2, v3)
-        for p in skipped:
-            iterate(p) # Catch up with the points we skipped
+
     # Regular cases:
-    elif isLeftOf(v1, v2, v3):
+    if isLeftOf(v1, v2, v3):
         convex_hull = [v1, v2, v3]
         HDCEL.make_triangle(v1, v2, v3)
     else:
         convex_hull = [v1, v3, v2]
         HDCEL.make_triangle(v1, v3, v2)
+
+    for p in skipped:
+        iterate(p) # Catch up with the points we skipped
 
     # Run iterations
     for i in range(it, len(vertices)):
