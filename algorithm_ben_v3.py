@@ -61,12 +61,15 @@ def run(_vertices, _filename, _verbose, _explicit):
     for island in islands:
         HFIX.integrate_island(island, vertices)
 
+    # Resolve inflexes
     if verbose: print("Resolve pass...")
     HFIX.run(vertices)
 
+    # Integrate stray points
     if verbose: print("Integrating stray points")
     HFIX.integrate([v for v in vertices if v.incidentEdge is None])
 
+    # Clean
     if verbose: print("Final Cleaning pass")
     HCLEAN.clean_edges()
 

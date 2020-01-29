@@ -50,11 +50,15 @@ def getEdge(a, b):
         e = e.twin.nxt
     return e # edge e between vertices a and b
 
-def sortByDistance(vlist, p):
-    """ Sorts a list of vertices by euclidean distance towards a reference vertex p """
-    rlist = vlist.copy()
-    rlist.sort(key=lambda x: get_distance(x, p))
-    return rlist
+def extract_closest(vlist, p):
+    min_d = float('inf')
+    min_v = None
+    for v in vlist:
+        if get_distance(v, p) < min_d:
+            min_d = get_distance(v, p)
+            min_v = v
+    vlist.remove(v)
+    return v
 
 def get_all_areas(verts):
     global local_full_edge_list
@@ -87,13 +91,13 @@ def integrate_island(edge_on_island, vertices):
     island_edges = get_single_area(edge_on_island)
 
     for edge_on_island in island_edges:
-        verts = sortByDistance(vertices, edge_on_island.origin) # we'll just sort by distance to this point why not
-        for v in verts:
+        verts = vertices.copy()
+        while len(verts)>0:
+            v = extract_closest(verts, edge_on_island.origin) # we'll just sort by distance to this point why not
             if v.claimant is not None and v.mark==1:
                 if can_place_edge(edge_on_island.origin, v):
                     HDCEL.mark_depth_first(edge_on_island.origin, mark=1) # Mark this island as mainland
                     local_connect(edge_on_island.origin, v)
-                    if verbose: print("Island integrated.")
                     return
     if verbose: print("ERR: Could not integrate island.")
 
@@ -114,8 +118,7 @@ def point_on_edge(p, e):
 
 def get_edge_below_point(p):
     global local_edge_list
-    edges = local_edge_list
-    for e in edges:
+    for e in local_edge_list:
         if point_on_edge(p, e): return e
     return None
 
