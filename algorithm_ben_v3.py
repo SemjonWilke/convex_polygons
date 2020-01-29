@@ -148,31 +148,6 @@ class Hull:
         for i in range(len(self.convex_hull)):
             self.ch(i).connect_to(self.ch(i+1))
 
-def circle_intersect(c1, r1, c2, r2):
-    return get_distance(c1, c2) <= (r1-r2)**2
-
-def sq_edge_point_dist(a, b, p):
-    dx = b.x - a.x
-    dy = b.y - a.y
-    dr2 = float(dx ** 2 + dy ** 2)
-
-    lerp = ((p.x - a.x) * dx + (p.y - a.y) * dy) / dr2
-    if lerp < 0:
-        lerp = 0
-    elif lerp > 1:
-        lerp = 1
-
-    x = lerp * dx + a.x
-    y = lerp * dy + a.y
-
-    _dx = x - p.x
-    _dy = y - p.y
-    square_dist = _dx ** 2 + _dy ** 2
-    return square_dist
-
-def edge_circle_intersect(c, r, e1, e2):
-    return sq_edge_point_dist(e1, e2, c) <= r
-
 def center(a, b, c):
     """ Returns centroid (geometric center) of a triangle abc """
     avg_x = (a.x+b.x+c.x) / 3
@@ -234,15 +209,22 @@ def segment_intersect(l1, l2, g1, g2, strict=True):
         return strict
     return isLeftOf(l1, l2, g1) != isLeftOf(l1, l2, g2) and isLeftOf(g1, g2, l1) != isLeftOf(g1, g2, l2)
 
+def circle_intersect(c1, r1, c2, r2):
+    return get_distance(c1, c2) <= r1+r2
+
 def occluded(v, left, right, target):
-    for h in hulls:
-        if h!=target and (edge_circle_intersect(h.origin, h.radius, v, left) or edge_circle_intersect(h.origin, h.radius, v, right)):
-            for i in range(len(h.convex_hull)):
-                if segment_intersect(h.ch(i), h.ch(i+1), v, left, strict=False): return True
-                if segment_intersect(h.ch(i), h.ch(i+1), v, right, strict=False): return True
     for p in target.vertex_list[0:target.current_index]:
         if p!=v and p!=left and p!=right and PointInTriangle(p, v, right, left):
             return True
+
+    d = get_distance(target.origin, v)
+    relevant_hulls = [h for h in hulls if circle_intersect(h.origin, h.radius, target.origin, d)]
+    for h in relevant_hulls:
+        if h!=target:
+            for i in range(len(h.convex_hull)):
+                if segment_intersect(h.ch(i), h.ch(i+1), v, left, strict=False): return True
+                if segment_intersect(h.ch(i), h.ch(i+1), v, right, strict=False): return True
+    #print(len(relevant_hulls))
     return False
 
 def m_sign (p1, p2, p3):
