@@ -214,7 +214,6 @@ def resolve_inflex(inflex, edges, areas):
     p1_valid = p2_valid = False
     p1_strong = p2_strong = False
 
-    # TODO: Are there cases were the "isRightOf"s *should* be strict?
     if ie.nxt.origin!=p1 and coll(ie.origin, p1, edges)[1] >= get_distance(ie.origin, p1):
         p1_valid = True
         if isRightOf(ie.prev.origin, ie.origin, p1, strict=False) and isRightOf(ie.origin, ie.nxt.origin, p1, strict=False): p1_strong = True

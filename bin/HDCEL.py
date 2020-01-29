@@ -443,7 +443,7 @@ def mark_depth_first(vertex, mark):
     queue = [vertex]
 
     while len(queue)>0:
-        v = queue.pop(0)
+        v = queue.pop()
         v.mark = mark
 
         for e in v.get_connected_edges():

@@ -12,10 +12,17 @@ import HCLEAN
 import HFIX
 import HVIS
 from HDCEL import isLeftOf, isRightOf, are_colinear
+import threading
 
 vertices = []
 hulls = []
 verbose = False
+vlists = []
+
+def sorting_thread(spoints):
+    global vlists
+    for p in spoints:
+        vlists.append(sortByDistance(vertices, p))
 
 def run(_vertices, _filename, _verbose, _explicit):
     global vertices, verbose
@@ -32,10 +39,15 @@ def run(_vertices, _filename, _verbose, _explicit):
 
     # First pass
     if verbose: print("First pass...")
+    sortingThread = threading.Thread(target=sorting_thread, args=(starting_points,))
+    sortingThread.start()
     for i in range(len(starting_points)):
-        h = Hull(starting_points[i])
+        while len(vlists)<i+1:
+            continue
+        h = Hull(starting_points[i], vlists[i])
         h.grow()
         if verbose: print("\r"+str(int(100*i/len(starting_points)))+"%", end='')
+    sortingThread.join()
     if verbose: print("\rDone")
 
     # Second pass
@@ -90,14 +102,14 @@ class Hull:
     def ch_i(self, i):
         return i % len(self.convex_hull)
 
-    def __init__(self, startpoint=None):
+    def __init__(self, startpoint, vlist=None):
         global vertices
         # Create starting point and vertex list
-        if startpoint is None:
-            self.origin = Vertex(explicit_x=randint(0,14000), explicit_y=randint(0,8000))
+        self.origin = startpoint
+        if vlist is None:
+            self.vertex_list = sortByDistance(vertices, self.origin)
         else:
-            self.origin = startpoint
-        self.vertex_list = sortByDistance(vertices, self.origin)
+            self.vertex_list = vlist
 
         # First check if we can at least make a triangle at this location. If we can't we may as well toss this iterator
         if self.vertex_list[0].claimant is not None and self.vertex_list[0].claimant == self.vertex_list[1].claimant == self.vertex_list[2].claimant: return
@@ -124,16 +136,20 @@ class Hull:
         hulls.append(self)
 
     def grow(self):
+        failed = 0
         if not self.alive: return
         while self.current_index+1 < len(self.vertex_list):
+            if failed > 100: break #This should save us some time
             self.current_index += 1
             v = self.vertex_list[self.current_index]
 
             i, j = getVisibleBounds(v, self)
             i, j = self.ch_i(i), self.ch_i(j)
 
+            failed += 1
             if abs(j-i) > 1: continue
             if occluded(v, self.ch(i), self.ch(j), self): continue
+            failed = 0
 
             if j < i:
                 self.convex_hull[i+1:len(self.convex_hull)] = [v]
