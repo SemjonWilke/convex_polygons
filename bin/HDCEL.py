@@ -272,11 +272,11 @@ def get_edge_list():
     if edge_list._size != 0:
         _e = edge_list._head
         while(_e != None):
-            if _e not in e_list and _e.twin not in e_list:
+            if _e.twin not in e_list:
                 e_list.append(_e)
             _e = _e.succ
 
-        e_list.sort(key=lambda x:(x.origin.x(),x.prev.origin.x()))
+        #e_list.sort(key=lambda x:(x.origin.x(),x.prev.origin.x()))
         return e_list
     return []
 
@@ -286,11 +286,11 @@ def get_full_edge_list():
     if edge_list._size != 0:
         _e = edge_list._head
         while(_e != None):
-            if _e not in e_list:
-                e_list.append(_e)
+        #if _e not in e_list:
+            e_list.append(_e)
             _e = _e.succ
 
-        e_list.sort(key=lambda x:(x.origin.x(),x.prev.origin.x()))
+        #e_list.sort(key=lambda x:(x.origin.x(),x.prev.origin.x()))
         return e_list
     return []
 
