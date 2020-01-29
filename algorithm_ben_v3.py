@@ -52,16 +52,14 @@ def run(_vertices, _filename, _verbose, _explicit):
     HDCEL.form_convex_hull(vertices)
     if verbose: print("Done")
 
+    # If edges are changed we need to call this again.
+    HFIX.init()
+
     # Integrate Islands
     islands = HFIX.get_all_islands(vertices)
     if verbose: print(str(len(islands)) + " Islands detected.")
     for island in islands:
         HFIX.integrate_island(island, vertices)
-
-    # Clean
-    #print("Cleaning pass...")
-    #HCLEAN.clean_edges()
-    #print("Done")
 
     if verbose: print("Resolve pass...")
     HFIX.run(vertices)

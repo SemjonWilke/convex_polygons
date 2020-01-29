@@ -6,19 +6,43 @@ import math
 
 verbose = True
 
+local_full_edge_list = []
+local_edge_list = []
+
+def init():
+    global local_full_edge_list, local_edge_list
+    local_full_edge_list = HDCEL.get_full_edge_list()
+    local_edge_list = HDCEL.get_edge_list()
+
+def local_connect(a, b):
+    global local_full_edge_list, local_edge_list
+    e = a.connect_to(b)
+    local_full_edge_list.append(e)
+    local_full_edge_list.append(e.twin)
+    local_edge_list.append(e)
+    return e
+
+def local_remove(e):
+    global local_full_edge_list, local_edge_list
+    local_full_edge_list.remove(e)
+    local_full_edge_list.remove(e.twin)
+    if e in local_edge_list: local_edge_list.remove(e)
+    if e.twin in local_edge_list: local_edge_list.remove(e.twin)
+    e.remove()
+
 def get_all_islands(verts):
+    global local_full_edge_list
     master = HDCEL.get_convex_hull(verts)[0]
     HDCEL.mark_depth_first(master, mark=1) # 1 shall signify that this vertex is part of the main congolomerate
 
     islands = []
-    le = [e for e in HDCEL.get_full_edge_list() if e.origin.mark is None]
+    le = [e for e in local_full_edge_list if e.origin.mark is None]
     while len(le)>0:
         e = le[0]
         islands.append(e)
         HDCEL.mark_depth_first(e.origin, mark=2) # 2 shall signify that this vertex is part of an isolated island
         le = [e for e in le if e.origin.mark is None]
     return islands
-
 
 def getEdge(a, b):
     e = a.incidentEdge
@@ -33,7 +57,8 @@ def sortByDistance(vlist, p):
     return rlist
 
 def get_all_areas(verts):
-    le = HDCEL.get_full_edge_list()
+    global local_full_edge_list
+    le = local_full_edge_list.copy()
     chull = HDCEL.get_convex_hull(verts)
 
     for i in range(len(chull)):
@@ -59,7 +84,7 @@ def get_all_areas(verts):
     return areas
 
 def integrate_island(edge_on_island, vertices):
-    island_edges = get_single_area(edge_on_island)[2]
+    island_edges = get_single_area(edge_on_island)
 
     for edge_on_island in island_edges:
         verts = sortByDistance(vertices, edge_on_island.origin) # we'll just sort by distance to this point why not
@@ -67,17 +92,16 @@ def integrate_island(edge_on_island, vertices):
             if v.claimant is not None and v.mark==1:
                 if can_place_edge(edge_on_island.origin, v):
                     HDCEL.mark_depth_first(edge_on_island.origin, mark=1) # Mark this island as mainland
-                    edge_on_island.origin.connect_to(v)
+                    local_connect(edge_on_island.origin, v)
                     if verbose: print("Island integrated.")
                     return
     if verbose: print("ERR: Could not integrate island.")
 
-
 # Use this sparingly as it runs poorly
 def can_place_edge(a, b):
-    edges = HDCEL.get_edge_list()
-    for i in range(len(edges)):
-        if segment_intersect(edges[i].origin, edges[i].nxt.origin, a, b, strict=True):
+    global local_edge_list
+    for e in local_edge_list:
+        if segment_intersect(e.origin, e.nxt.origin, a, b, strict=True):
             return False
     return True
 
@@ -89,7 +113,8 @@ def point_on_edge(p, e):
     return get_distance(e.origin, p) <= em and get_distance(e.nxt.origin, p) <= em
 
 def get_edge_below_point(p):
-    edges = HDCEL.get_edge_list()
+    global local_edge_list
+    edges = local_edge_list
     for e in edges:
         if point_on_edge(p, e): return e
     return None
@@ -103,32 +128,26 @@ def integrate(stray_points):
         # Stray point is on top of an edge:
         e = get_edge_below_point(p)
         if e is not None:
-            e.origin.connect_to(p)
-            e.nxt.origin.connect_to(p)
-            e.remove()
+            local_connect(e.origin, p)
+            local_connect(e.nxt.origin, p)
+            local_remove(e)
         # Stray point is inside of an area:
         else:
             a = get_surrounding_area(p)
             integrate_into_area(p, a)
 
 def integrate_into_area(p, edgelist):
-    last_edge = p.connect_to(edgelist[0].origin)
+    last_edge = local_connect(p, edgelist[0].origin)
     for e in edgelist[1:]:
         if HDCEL.angle(last_edge, e.origin) >= 180:
-            last_edge = p.connect_to(e.origin)
+            last_edge = local_connect(p, e.origin)
 
-def get_single_area(e):
+def get_single_area_tuple(e):
     oe = e
     area = []
     inflexes = []
 
-    c = 0
     while e.nxt!=oe:
-        c += 1
-        if c>2000:
-            if verbose: print("Endless loop")
-            return
-
         area.append(e)
         if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
         e = e.nxt
@@ -136,11 +155,22 @@ def get_single_area(e):
 
     return (oe, len(inflexes)==0, area, inflexes)
 
+def get_single_area(e):
+    oe = e
+    area = []
+    while e.nxt!=oe:
+        area.append(e)
+        e = e.nxt
+    area.append(e)
+
+    return area
+
 def get_surrounding_area(p):
-    le = HDCEL.get_full_edge_list()
+    global local_full_edge_list
+    le = local_full_edge_list
     #TODO: sort edges by distance to point?
     for e in le:
-        a = get_single_area(e)[2]
+        a = get_single_area(e)
         if point_in_area(a, p): return a
     return None
 
@@ -163,7 +193,7 @@ def run(verts):
             continue
         else:
             for i in inflexes:
-                resolve_inflex(i, get_single_area(i)[2], areas)
+                resolve_inflex(i, get_single_area(i), areas)
 
 def resolve_inflex(inflex, edges, areas):
     if isRightOf(inflex.prev.origin, inflex.origin, inflex.nxt.origin, strict=False): return # This is not an inflex -> dont care
@@ -191,24 +221,24 @@ def resolve_inflex(inflex, edges, areas):
         if isRightOf(ie.prev.origin, ie.origin, p2, strict=False) and isRightOf(ie.origin, ie.nxt.origin, p2, strict=False): p2_strong = True
 
     if p1_strong:
-        u = ie.origin.connect_to(p1)
-        areas.append(get_single_area(u))
-        areas.append(get_single_area(u.twin))
+        u = local_connect(ie.origin, p1)
+        areas.append(get_single_area_tuple(u))
+        areas.append(get_single_area_tuple(u.twin))
         return
 
     elif p2_strong:
-        u = ie.origin.connect_to(p2)
-        areas.append(get_single_area(u))
-        areas.append(get_single_area(u.twin))
+        u = local_connect(ie.origin, p2)
+        areas.append(get_single_area_tuple(u))
+        areas.append(get_single_area_tuple(u.twin))
         return
 
     elif p1_valid and p2_valid and p1!=p2:
-        u = ie.origin.connect_to(p1)
-        u2 = ie.origin.connect_to(p2)
-        areas.append(get_single_area(u))
-        areas.append(get_single_area(u.twin))
-        areas.append(get_single_area(u2))
-        areas.append(get_single_area(u2.twin))
+        u = local_connect(ie.origin, p1)
+        u2 = local_connect(ie.origin, p2)
+        areas.append(get_single_area_tuple(u))
+        areas.append(get_single_area_tuple(u.twin))
+        areas.append(get_single_area_tuple(u2))
+        areas.append(get_single_area_tuple(u2.twin))
         return
 
     else:
@@ -244,13 +274,6 @@ def coll(origin, dir, edges):
             if  get_distance(origin, collision_point) < min_dist:
                 min_dist = get_distance(origin, collision_point)
                 min_e = e
-
-    #assert(min_e is not None)
-    #if min_e is None:
-    #    HVIS.drawSingleTEdge(origin, dir, color="r")
-    #    for e in edges:
-    #        HVIS.drawSingleEdge(e, color="k", width=1)
-    #    HVIS.show()
 
     # We dont want to return actual floats if they are not infinite, as this will cause floating point issues.
     if min_dist < float('inf'):
