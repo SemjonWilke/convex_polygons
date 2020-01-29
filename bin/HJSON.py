@@ -65,7 +65,7 @@ def writeTestSolution(filename, instance, coord, vbse, edges=[], overwrite=False
         fexist = False
         better = len(edges['in'])
 
-    if better > 0: # overwrite if its better and feasible else discard
+    if False and better > 0: # overwrite if its better and feasible else discard
         if verbose: print("Found a stronger solution by %s edges" % better)
         status = HCHECK.liveChecker(points, edges, instance)
         if verbose and not status.is_feasible(): print(status.get_message())

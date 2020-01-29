@@ -4,7 +4,7 @@ import HVIS
 import HCLEAN
 import math
 
-verbose = False
+verbose = True
 
 def get_all_islands(verts):
     master = HDCEL.get_convex_hull(verts)[0]
@@ -22,12 +22,8 @@ def get_all_islands(verts):
 
 def getEdge(a, b):
     e = a.incidentEdge
-    i = 0 # guard to prevent endless loop, i is at most |V| with V = E
-    while e.nxt.origin != b and i <= 9999:
-        i += 1
+    while e.nxt.origin != b:
         e = e.twin.nxt
-    if i > 9999:
-        if verbose: print("INFO: Points (%i,%i) not connected" % (a.i, b.i))
     return e # edge e between vertices a and b
 
 def sortByDistance(vlist, p):
@@ -35,7 +31,6 @@ def sortByDistance(vlist, p):
     rlist = vlist.copy()
     rlist.sort(key=lambda x: get_distance(x, p))
     return rlist
-
 
 def get_all_areas(verts):
     le = HDCEL.get_full_edge_list()
@@ -223,12 +218,12 @@ def resolve_inflex(inflex, edges, areas):
 def findIntersection(v1,v2,v3,v4):
     if v1==v3 or v1==v4: return v1
     if v2==v3 or v2==v4: return v2
-    px= ( (v1.x()*v2.y()-v1.y()*v2.x())*(v3.x()-v4.x())-(v1.x()-v2.x())*(v3.x()*v4.y()-v3.y()*v4.x()) ) / ( (v1.x()-v2.x())*(v3.y()-v4.y())-(v1.y()-v2.y())*(v3.x()-v4.x()) )
-    py= ( (v1.x()*v2.y()-v1.y()*v2.x())*(v3.y()-v4.y())-(v1.y()-v2.y())*(v3.x()*v4.y()-v3.y()*v4.x()) ) / ( (v1.x()-v2.x())*(v3.y()-v4.y())-(v1.y()-v2.y())*(v3.x()-v4.x()) )
+    px= ( (v1.x*v2.y-v1.y*v2.x)*(v3.x-v4.x)-(v1.x-v2.x)*(v3.x*v4.y-v3.y*v4.x) ) / ( (v1.x-v2.x)*(v3.y-v4.y)-(v1.y-v2.y)*(v3.x-v4.x) )
+    py= ( (v1.x*v2.y-v1.y*v2.x)*(v3.y-v4.y)-(v1.y-v2.y)*(v3.x*v4.y-v3.y*v4.x) ) / ( (v1.x-v2.x)*(v3.y-v4.y)-(v1.y-v2.y)*(v3.x-v4.x) )
     return Vertex(px, py)
 
 def get_distance(v1, v2):
-    return (v2.x() - v1.x())**2 + ( v2.y() - v1.y())**2
+    return (v2.x - v1.x)**2 + ( v2.y - v1.y)**2
 
 # May require strcit=True for colinear points?
 def segment_intersect(l1, l2, g1, g2, strict=False):
@@ -236,7 +231,7 @@ def segment_intersect(l1, l2, g1, g2, strict=False):
     return isLeftOf(l1, l2, g1, strict=True) != isLeftOf(l1, l2, g2, strict=True) and isLeftOf(g1, g2, l1, strict=True) != isLeftOf(g1, g2, l2, strict=True)
 
 def coll(origin, dir, edges):
-    dir = HDCEL.Vertex(dir.x()-origin.x(), dir.y()-origin.y())
+    dir = HDCEL.Vertex(dir.x-origin.x, dir.y-origin.y)
     dir = dir.mul(2000000) #NOTE: Normalizing dir before multiplying breaks the program and I dont know why.
     dir = origin.add(dir)
 

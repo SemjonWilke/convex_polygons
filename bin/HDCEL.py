@@ -4,8 +4,8 @@ import math
 points = []
 
 def isLeftOf(a, b, v, strict=False):
-    if strict: return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
-    return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) >= 0
+    if strict: return ((b.x - a.x)*(v.y - a.y) - (b.y - a.y)*(v.x - a.x)) > 0
+    return ((b.x - a.x)*(v.y - a.y) - (b.y - a.y)*(v.x - a.x)) >= 0
 
 def isRightOf(a, b, v, strict=False):
     return not isLeftOf(a, b, v, strict=not strict)
@@ -24,7 +24,7 @@ def angle(edge, c):
     a=edge.nxt.origin
     b=edge.origin
 
-    ang = math.degrees(math.atan2(c.y()-b.y(), c.x()-b.x()) - math.atan2(a.y()-b.y(), a.x()-b.x()))
+    ang = math.degrees(math.atan2(c.y-b.y, c.x-b.x) - math.atan2(a.y-b.y, a.x-b.x))
     return ang + 360 if ang < 0 else ang
 
 # Sets two edges as twins
@@ -50,31 +50,31 @@ def area(e):
 class Vertex:
     i = -1
     incidentEdge = None
-    explicit_x = None
-    explicit_y = None
+    x = None
+    y = None
     occupied = False
     on_hull = False
     claimant = None
     mark = None
 
     def magnitude(self):
-        assert(math.sqrt(self.x()**2 + self.y()**2)>0.0001)
-        return math.sqrt(self.x()**2 + self.y()**2)
+        assert(math.sqrt(self.x**2 + self.y**2)>0.0001)
+        return math.sqrt(self.x**2 + self.y**2)
 
     def normalized(self):
         l = self.magnitude()
-        n = Vertex(self.x()/l, self.y()/l)
+        n = Vertex(self.x/l, self.y/l)
         assert(n.magnitude()>0.95 and n.magnitude()<1.05)
         return n
 
     def mul(self, d):
-        return Vertex(self.x()*d, self.y()*d)
+        return Vertex(self.x*d, self.y*d)
 
     def add(self, x, y):
-        return Vertex(self.x()+x, self.y()+y)
+        return Vertex(self.x+x, self.y+y)
 
     def add(self, v):
-        return Vertex(self.x()+v.x(), self.y()+v.y())
+        return Vertex(self.x+v.x, self.y+v.y)
 
     def __eq__(self, v):
         return self.i== v.i
@@ -82,21 +82,16 @@ class Vertex:
     def __hash__(self):
         return hash(repr(self))
 
-    def x(self):
-        if(self.i>-1): return points[self.i][0]
-        return self.explicit_x
-
-    def y(self):
-        if(self.i>-1): return points[self.i][1]
-        return self.explicit_y
-
     def __init__(self, explicit_x=None, explicit_y=None, index=-1):
         self.i=index
-        self.explicit_x=explicit_x
-        self.explicit_y=explicit_y
+        self.x=explicit_x
+        self.y=explicit_y
+        if index>-1:
+            self.x = points[self.i][0]
+            self.y = points[self.i][1]
 
     def __str__(self):
-        return "Index: {0} X: {1} Y: {2}".format(self.i,self.x(),self.y())
+        return "Index: {0} X: {1} Y: {2}".format(self.i,self.x,self.y)
 
     def get_convex_incidentEdge(self):
         e = self.incidentEdge
@@ -152,21 +147,17 @@ class Vertex:
     def connect_to(self, v):
         assert(v!=self)
 
-        for e in self.get_connected_edges():
-            if e.nxt.origin == v: return e
+        if(self.incidentEdge is None):
+            if(v.incidentEdge is not None):
+                return v.connect_to(self).twin
+            else:
+                self.incidentEdge = Edge(self)
+                v.incidentEdge = Edge(v)
 
-        if(v.incidentEdge is not None and self.incidentEdge is None):
-            return v.connect_to(self).twin
-
-        if(self.incidentEdge is None and v.incidentEdge is None):
-            self.incidentEdge = Edge(self)
-            v.incidentEdge = Edge(v)
-
-            chain(self.incidentEdge, v.incidentEdge)
-            chain(v.incidentEdge, self.incidentEdge)
-            twin(self.incidentEdge, v.incidentEdge)
-            assert(self.incidentEdge.nxt.origin==v)
-            return self.incidentEdge
+                chain(self.incidentEdge, v.incidentEdge)
+                chain(v.incidentEdge, self.incidentEdge)
+                twin(self.incidentEdge, v.incidentEdge)
+                return self.incidentEdge
 
         if(v.incidentEdge is None):
             left, right = self.get_left_right_edge(v)
@@ -184,6 +175,10 @@ class Vertex:
             return back
 
         else:
+            # vertices already connected?
+            for e in self.get_connected_edges():
+                if e.nxt.origin == v: return e
+
             s_left, s_right = self.get_left_right_edge(v)
             v_left, v_right = v.get_left_right_edge(self)
 
@@ -276,7 +271,7 @@ def get_edge_list():
                 e_list.append(_e)
             _e = _e.succ
 
-        #e_list.sort(key=lambda x:(x.origin.x(),x.prev.origin.x()))
+        #e_list.sort(key=lambda x:(x.origin.x,x.prev.origin.x))
         return e_list
     return []
 
@@ -290,7 +285,7 @@ def get_full_edge_list():
             e_list.append(_e)
             _e = _e.succ
 
-        #e_list.sort(key=lambda x:(x.origin.x(),x.prev.origin.x()))
+        #e_list.sort(key=lambda x:(x.origin.x,x.prev.origin.x))
         return e_list
     return []
 
@@ -325,7 +320,7 @@ class Edge:
                 self.prev.origin,self.nxt.origin,self.twin.origin)
 
     def to_vector(self):
-        return Vertex(self.nxt.origin.x() - self.origin.x(), self.nxt.origin.y() - self.origin.y())
+        return Vertex(self.nxt.origin.x - self.origin.x, self.nxt.origin.y - self.origin.y)
 
     def remove(self, recursive=True):
         edge_list.remove(self)
@@ -345,7 +340,7 @@ class Edge:
 
 # Function to print information on a vertex. Useful for debugging
 def print_vertex(v):
-    #print("Vertex: " + str(v.x()) + " : " + str(v.y()))
+    #print("Vertex: " + str(v.x) + " : " + str(v.y))
     e = v.incidentEdge
     while(True):
         #print(e)
@@ -385,12 +380,12 @@ def get_triangle(a, b, c):
 
 def sortByX(vlist):
     rlist = vlist.copy()
-    rlist.sort(key=lambda x: x.y()) # first sort by y
-    rlist.sort(key=lambda x: x.x())
+    rlist.sort(key=lambda x: x.y) # first sort by y
+    rlist.sort(key=lambda x: x.x)
     return rlist
 
 def cross(o, a, b):
-        return (a.x() - o.x()) * (b.y() - o.y()) - (a.y() - o.y()) * (b.x() - o.x())
+        return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x)
 
 def get_convex_hull(verts):
     verts = sortByX(verts)

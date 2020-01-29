@@ -152,21 +152,21 @@ def circle_intersect(c1, r1, c2, r2):
     return get_distance(c1, c2) <= (r1-r2)**2
 
 def sq_edge_point_dist(a, b, p):
-    dx = b.x() - a.x()
-    dy = b.y() - a.y()
+    dx = b.x - a.x
+    dy = b.y - a.y
     dr2 = float(dx ** 2 + dy ** 2)
 
-    lerp = ((p.x() - a.x()) * dx + (p.y() - a.y()) * dy) / dr2
+    lerp = ((p.x - a.x) * dx + (p.y - a.y) * dy) / dr2
     if lerp < 0:
         lerp = 0
     elif lerp > 1:
         lerp = 1
 
-    x = lerp * dx + a.x()
-    y = lerp * dy + a.y()
+    x = lerp * dx + a.x
+    y = lerp * dy + a.y
 
-    _dx = x - p.x()
-    _dy = y - p.y()
+    _dx = x - p.x
+    _dy = y - p.y
     square_dist = _dx ** 2 + _dy ** 2
     return square_dist
 
@@ -175,8 +175,8 @@ def edge_circle_intersect(c, r, e1, e2):
 
 def center(a, b, c):
     """ Returns centroid (geometric center) of a triangle abc """
-    avg_x = (a.x()+b.x()+c.x()) / 3
-    avg_y = (a.y()+b.y()+c.y()) / 3
+    avg_x = (a.x+b.x+c.x) / 3
+    avg_y = (a.y+b.y+c.y) / 3
     return Vertex(explicit_x=avg_x, explicit_y=avg_y)
 
 def isVisible(i, v, master, strict=True):
@@ -221,7 +221,7 @@ def getVisibleBounds(v, master):
 
 def get_distance(v1, v2):
     """ Returns euclidean distance between two points """
-    return (v2.x() - v1.x())**2 + ( v2.y() - v1.y())**2
+    return (v2.x - v1.x)**2 + ( v2.y - v1.y)**2
 
 def sortByDistance(vlist, p):
     """ Sorts a list of vertices by euclidean distance towards a reference vertex p """
@@ -246,7 +246,7 @@ def occluded(v, left, right, target):
     return False
 
 def m_sign (p1, p2, p3):
-    return (p1.x() - p3.x()) * (p2.y() - p3.y()) - (p2.x() - p3.x()) * (p1.y() - p3.y())
+    return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
 
 def PointInTriangle (pt, v1, v2, v3):
     d1 = m_sign(pt, v1, v2);

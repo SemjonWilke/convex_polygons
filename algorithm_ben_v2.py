@@ -44,8 +44,8 @@ def run(_vertices, _filename, _verbose, _explicit):
 
 def center(a, b, c):
     """ Returns centroid (geometric center) of a triangle abc """
-    avg_x = (a.x()+b.x()+c.x()) / 3
-    avg_y = (a.y()+b.y()+c.y()) / 3
+    avg_x = (a.x+b.x+c.x) / 3
+    avg_y = (a.y+b.y+c.y) / 3
     return Vertex(explicit_x=avg_x, explicit_y=avg_y)
 
 def isVisible(i, v, master, strict=True):
@@ -94,7 +94,7 @@ def getVisibleBounds(v, master):
 
 def get_distance(v1, v2):
     """ Returns euclidean distance between two points """
-    return (v2.x() - v1.x())**2 + ( v2.y() - v1.y())**2
+    return (v2.x - v1.x)**2 + ( v2.y - v1.y)**2
 
 def sortByDistance(vlist, p):
     """ Sorts a list of vertices by euclidean distance towards a reference vertex p """
@@ -145,7 +145,7 @@ def occluded(v, left, right, target):
     return False
 
 def m_sign (p1, p2, p3):
-    return (p1.x() - p3.x()) * (p2.y() - p3.y()) - (p2.x() - p3.x()) * (p1.y() - p3.y())
+    return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
 
 def PointInTriangle (pt, v1, v2, v3):
     d1 = m_sign(pt, v1, v2);

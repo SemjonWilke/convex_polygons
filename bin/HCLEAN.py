@@ -1,10 +1,10 @@
 import HDCEL
 import HVIS
 
-verbose = False
+verbose = True
 
 def isLeftOf(a, b, v):
-    return ((b.x() - a.x())*(v.y() - a.y()) - (b.y() - a.y())*(v.x() - a.x())) > 0
+    return ((b.x - a.x)*(v.y - a.y) - (b.y - a.y)*(v.x - a.x)) > 0
 
 def segment_intersect(l1, l2, g1, g2):
     if len(set([l1,l2,g1,g2]))!=len([l1,l2,g1,g2]): return False

@@ -50,23 +50,23 @@ def drawEdges(edges, points, color='b-'):
 
 def drawHull():
     for i in range(len(convex_hull)):
-        axs.plot([ch(i).x(), ch(i+1).x()], [ch(i).y(), ch(i+1).y()], 'r-')
+        axs.plot([ch(i).x, ch(i+1).x], [ch(i).y, ch(i+1).y], 'r-')
 
 def drawSingleEdge(e, color='b', width=4):
-    axs.plot([e.origin.x(), e.nxt.origin.x()], [e.origin.y(), e.nxt.origin.y()], color+'-', linewidth=width)
+    axs.plot([e.origin.x, e.nxt.origin.x], [e.origin.y, e.nxt.origin.y], color+'-', linewidth=width)
 
 def drawSingleTEdge(p1, p2, color='b', width=4):
-    axs.plot([p1.x(), p2.x()], [p1.y(), p2.y()], color+'-', linewidth=width)
+    axs.plot([p1.x, p2.x], [p1.y, p2.y], color+'-', linewidth=width)
 
 def drawVector(v, origin=None, color='k', width=2):
-    if origin is None: axs[0].plot([0, v.x()], [0, v.y()], color+'-', linewidth=width)
-    else: axs.plot([origin.x(), origin.x()+v.x()], [origin.y(), origin.y()+v.y()], color+'-', linewidth=width)
+    if origin is None: axs[0].plot([0, v.x], [0, v.y], color+'-', linewidth=width)
+    else: axs.plot([origin.x, origin.x+v.x], [origin.y, origin.y+v.y], color+'-', linewidth=width)
 
 def drawSingleHEdge(inp, outp, points, color='b'):
     axs.plot([points[inp][0], points[outp][0]], [points[inp][1], points[outp][1]], color+'-')
 
 def drawSinglePoint(v):
-    axs.plot(v.x(), v.y(), 'ks')
+    axs.plot(v.x, v.y, 'ks')
 
 def drawSingleHPoint(p, c='ks'):
     axs.plot(p[0], p[1], c)
@@ -78,7 +78,8 @@ def initVis():
     return fig,axs
 
 def show():
-    plt.show()
+    #plt.show()
+    plt.savefig("abc.png")
 
 #TODO: reuse branch solution drawing functions
 """

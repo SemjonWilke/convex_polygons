@@ -2,8 +2,6 @@ import sys
 import math
 
 import HDCEL
-import HCLEAN
-import HVIS
 from HDCEL import isLeftOf, isRightOf, isLeftOfEdge, isRightOfEdge, are_colinear
 
 convex_hull = []
@@ -16,7 +14,7 @@ def run(_vertices, _origin, _verbose):
     verbose = _verbose
 
     if verbose: print("Bens Algorithm")
-    if verbose: print("Start points are (%i|%i)" % (_origin.explicit_x, _origin.explicit_y))
+    if verbose: print("Start points are (%i|%i)" % (_origin.x, _origin.y))
     sortByDistance(vertices, _origin)
 
     v1, v2, v3 = vertices[0], vertices[1], vertices[2]
@@ -52,7 +50,6 @@ def run(_vertices, _origin, _verbose):
     for i in range(it, len(vertices)):
         iterate(vertices[i])
         sys.stdout.flush()
-    HCLEAN.clean_edges()
 
 def ch(i):
     return convex_hull[i % len(convex_hull)]
@@ -62,8 +59,8 @@ def ch_i(i):
 
 def  center(a, b, c):
     """ Returns centroid (geometric center) of a triangle  abc """
-    avg_x = (a.x()+b.x()+c.x()) / 3
-    avg_y = (a.y()+b.y()+c.y()) / 3
+    avg_x = (a.x+b.x+c.x) / 3
+    avg_y = (a.y+b.y+c.y) / 3
     return HDCEL.Vertex(explicit_x=avg_x, explicit_y=avg_y)
 
 def isVisible(i, v):
@@ -89,7 +86,7 @@ def getLeftMostVisibleIndex(v):
 
 # Inserted
 def get_distance(v1, v2):
-    return (v2.x() - v1.x())**2 + ( v2.y() - v1.y())**2
+    return (v2.x - v1.x)**2 + ( v2.y - v1.y)**2
 
 # Overwritten
 def sortByDistance(vlist, p):
@@ -120,15 +117,15 @@ def iterate(v):
     while isVisibleEdge(e, v):
         n = e.nxt
 
-        top_is_convex = isRightOfEdge(e.twin.prev, v, strict=False)
-        bot_is_convex = isRightOfEdge(e.twin.nxt, v, strict=False)
+        if not are_colinear(e.prev.origin, e.origin, e.nxt.origin):
+            e.origin.connect_to(v)
+            top_is_convex = isRightOfEdge(e.twin.prev, v, strict=False)
+            bot_is_convex = isRightOfEdge(e.twin.nxt, v, strict=False)
+            if top_is_convex and bot_is_convex:
+                e.remove()
 
-        e.origin.connect_to(v)
         if not isVisibleEdge(n, v):
             n.origin.connect_to(v) #This seems inefficient
-
-        if top_is_convex and bot_is_convex:
-            e.remove()
 
         e = n
         j += 1
