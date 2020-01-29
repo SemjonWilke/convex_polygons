@@ -1,5 +1,6 @@
 import HDCEL
 import HVIS
+import HFIX
 
 verbose = True
 
@@ -19,7 +20,12 @@ def dupes(listOfElems):
 
 def clean_edges():
     c = 0
-    edges = HDCEL.get_edge_list()
+
+    # List might be cached in HFIX
+    if len(HFIX.local_edge_list)>0:
+        edges = HFIX.local_edge_list
+    else:
+        edges = HDCEL.get_edge_list()
 
     redundant_edges = []
     for e in edges:

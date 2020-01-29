@@ -11,8 +11,7 @@ local_edge_list = []
 
 def init():
     global local_full_edge_list, local_edge_list
-    local_full_edge_list = HDCEL.get_full_edge_list()
-    local_edge_list = HDCEL.get_edge_list()
+    local_full_edge_list, local_edge_list = HDCEL.get_both_edge_lists()
 
 def local_connect(a, b):
     global local_full_edge_list, local_edge_list
@@ -32,6 +31,7 @@ def local_remove(e):
 
 def get_all_islands(verts):
     global local_full_edge_list
+
     master = HDCEL.get_convex_hull(verts)[0]
     HDCEL.mark_depth_first(master, mark=1) # 1 shall signify that this vertex is part of the main congolomerate
 
@@ -42,6 +42,7 @@ def get_all_islands(verts):
         islands.append(e)
         HDCEL.mark_depth_first(e.origin, mark=2) # 2 shall signify that this vertex is part of an isolated island
         le = [e for e in le if e.origin.mark is None]
+
     return islands
 
 def getEdge(a, b):
@@ -69,22 +70,23 @@ def get_all_areas(verts):
         le.remove(getEdge(chull[i-1], chull[i]))
 
     areas = []
-
     while len(le)>1:
+        oe = e = le.pop()
+        while e.mark is not None:
+            oe = e = le.pop()
+
         if verbose: print("\r"+str(len(le)), end='')
-        oe = e = le.pop(0)
-        area = []
         inflexes = []
 
         while e.nxt!=oe:
-            area.append(e)
-            if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
+            if e.mark is None:
+                if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
+                e.mark = 1
 
-            if e in le: le.remove(e)
+            #if e in le: le.remove(e)
             e = e.nxt
-        area.append(e)
 
-        areas.append((oe, len(inflexes)==0, area, inflexes))
+        areas.append((len(inflexes)==0, inflexes))
     return areas
 
 def integrate_island(edge_on_island, vertices):
@@ -147,16 +149,13 @@ def integrate_into_area(p, edgelist):
 
 def get_single_area_tuple(e):
     oe = e
-    area = []
     inflexes = []
 
     while e.nxt!=oe:
-        area.append(e)
         if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
         e = e.nxt
-    area.append(e)
 
-    return (oe, len(inflexes)==0, area, inflexes)
+    return (len(inflexes)==0, inflexes)
 
 def get_single_area(e):
     oe = e
@@ -185,13 +184,13 @@ def point_in_area(edgelist, p): #Note: only works for convex areas.
 
 
 def run(verts):
-    if verbose: print("Acquiring all areas... ", end="")
+    if verbose: print("Acquiring all areas... ")
     areas = get_all_areas(verts)
     if verbose: print("Done")
 
     while len(areas)>1:
         if verbose: print("\r"+str(len(areas)), end='')
-        (e, convex, edges, inflexes) = areas.pop(0)
+        (convex, inflexes) = areas.pop(0)
         if convex:
             continue
         else:

@@ -289,6 +289,24 @@ def get_full_edge_list():
         return e_list
     return []
 
+def get_both_edge_lists():
+    global edge_list
+    e_list = []
+    fe_list = []
+    if edge_list._size != 0:
+        _e = edge_list._head
+        while(_e != None):
+            _e.list_mark = 1
+            fe_list.append(_e)
+            if _e.twin.list_mark is None:
+                _e.twin.list_mark = 1
+                e_list.append(_e)
+            _e = _e.succ
+
+        #e_list.sort(key=lambda x:(x.origin.x,x.prev.origin.x))
+        return fe_list, e_list
+    return [], []
+
 
 # Edge class
 class Edge:
@@ -298,6 +316,8 @@ class Edge:
     twin = None
     pred = None  # predecessor in the list
     succ = None   #  successor in the list
+    mark = None
+    list_mark = None
 
     def __init__(self, origin=None, prev=None, nxt=None):
         self.origin=origin;
