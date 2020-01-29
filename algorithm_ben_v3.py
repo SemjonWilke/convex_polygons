@@ -134,7 +134,6 @@ class Hull:
 
             if abs(j-i) > 1: continue
             if occluded(v, self.ch(i), self.ch(j), self): continue
-            if abs(j-i) < 1 and verbose: print("???")
 
             if j < i:
                 self.convex_hull[i+1:len(self.convex_hull)] = [v]
@@ -241,7 +240,7 @@ def occluded(v, left, right, target):
             for i in range(len(h.convex_hull)):
                 if segment_intersect(h.ch(i), h.ch(i+1), v, left, strict=False): return True
                 if segment_intersect(h.ch(i), h.ch(i+1), v, right, strict=False): return True
-    for p in vertices:
+    for p in target.vertex_list[0:target.current_index]:
         if p!=v and p!=left and p!=right and PointInTriangle(p, v, right, left):
             return True
     return False
