@@ -84,7 +84,6 @@ def get_all_areas(verts):
                 if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
                 e.mark = 1
 
-            #if e in le: le.remove(e)
             e = e.nxt
 
         areas.append((len(inflexes)==0, inflexes))
@@ -133,9 +132,10 @@ def integrate(stray_points):
         # Stray point is on top of an edge:
         e = get_edge_below_point(p)
         if e is not None:
-            local_connect(e.origin, p)
-            local_connect(e.nxt.origin, p)
+            tmp1, tmp2 = e.origin, e.nxt.origin
             local_remove(e)
+            local_connect(tmp1, p)
+            local_connect(tmp2, p)
         # Stray point is inside of an area:
         else:
             a = get_surrounding_area(p)
