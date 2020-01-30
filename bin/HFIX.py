@@ -4,7 +4,7 @@ import HVIS
 import HCLEAN
 import math
 
-verbose = True
+verbose = False
 
 local_full_edge_list = []
 local_edge_list = []

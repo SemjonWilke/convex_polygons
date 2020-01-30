@@ -1,6 +1,6 @@
 import matplotlib
-#matplotlib.use("Agg")
-matplotlib.use("TkAgg")
+matplotlib.use("Agg")
+#matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 
 import HCOMMON
