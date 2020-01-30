@@ -46,6 +46,7 @@ def run(_vertices, _filename, _verbose, _explicit):
             continue
         h = Hull(starting_points[i], vlists[i])
         h.grow()
+        vlists[i] = []
         if verbose: print("\r"+str(int(100*i/len(starting_points)))+"%", end='')
     sortingThread.join()
     if verbose: print("\rDone")
@@ -62,7 +63,6 @@ def run(_vertices, _filename, _verbose, _explicit):
     # Convex hull
     if verbose: print("Outer hull...")
     HDCEL.form_convex_hull(vertices)
-    if verbose: print("Done")
 
     # If edges are changed we need to call this again.
     HFIX.init()
@@ -163,6 +163,8 @@ class Hull:
 
         for i in range(len(self.convex_hull)):
             self.ch(i).connect_to(self.ch(i+1))
+
+        self.vertex_list = []
 
 def center(a, b, c):
     """ Returns centroid (geometric center) of a triangle abc """
