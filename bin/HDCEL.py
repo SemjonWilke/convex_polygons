@@ -3,6 +3,18 @@ import math
 # Sample data for testing
 points = []
 
+def isLeftOf_s(a, b, v):
+    return ((b.x - a.x)*(v.y - a.y) - (b.y - a.y)*(v.x - a.x)) > 0
+
+def isLeftOf_ns(a, b, v):
+    return ((b.x - a.x)*(v.y - a.y) - (b.y - a.y)*(v.x - a.x)) >= 0
+
+def isRightOf_s(a, b, v):
+    return ((b.x - a.x)*(v.y - a.y) - (b.y - a.y)*(v.x - a.x)) < 0
+
+def isRightOf_ns(a, b, v):
+    return ((b.x - a.x)*(v.y - a.y) - (b.y - a.y)*(v.x - a.x)) <= 0
+
 def isLeftOf(a, b, v, strict=False):
     if strict: return ((b.x - a.x)*(v.y - a.y) - (b.y - a.y)*(v.x - a.x)) > 0
     return ((b.x - a.x)*(v.y - a.y) - (b.y - a.y)*(v.x - a.x)) >= 0
@@ -17,7 +29,7 @@ def isRightOfEdge(e, v, strict=False):
     return isRightOf(e.origin, e.nxt.origin, v, strict=strict)
 
 def are_colinear(a, b, c):
-    return isLeftOf(a, b, c, strict=False) and isRightOf(a, b, c, strict=False)
+    return isLeftOf_ns(a, b, c) and isRightOf_ns(a, b, c)
 
 # Returns angle between an edge and a hypothetical origin-to-c edge
 def angle(edge, c):

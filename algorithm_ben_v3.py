@@ -11,7 +11,7 @@ import HMERGE
 import HCLEAN
 import HFIX
 import HVIS
-from HDCEL import isLeftOf, isRightOf, are_colinear
+from HDCEL import are_colinear, isLeftOf_s, isRightOf_s, isLeftOf_ns, isRightOf_ns
 import threading
 
 vertices = []
@@ -138,8 +138,7 @@ class Hull:
     def grow(self):
         failed = 0
         if not self.alive: return
-        while self.current_index+1 < len(self.vertex_list):
-            if failed > 100: break #This should save us some time
+        while self.current_index+1 < len(self.vertex_list) and failed<100:
             self.current_index += 1
             v = self.vertex_list[self.current_index]
 
@@ -172,9 +171,9 @@ def center(a, b, c):
     avg_y = (a.y+b.y+c.y) / 3
     return Vertex(explicit_x=avg_x, explicit_y=avg_y)
 
-def isVisible(i, v, master, strict=True):
+def isVisible(i, v, master):
     """ Returns true if the i'th segment of the convex_hull is visible from v """
-    return isRightOf(master.ch(i), master.ch(i+1), v, strict)
+    return isRightOf_s(master.ch(i), master.ch(i+1), v)
 
 def getSomeVisibleSegment(v, master):
     """ Returns index of some segment on the convex hull visible from v """
@@ -187,7 +186,7 @@ def getSomeVisibleSegment(v, master):
         if isVisible(i, v, master):
             return i
 
-        if isLeftOf(center(master.ch(0), master.ch(1), master.ch(2)), master.ch(i), v):
+        if isLeftOf_ns(center(master.ch(0), master.ch(1), master.ch(2)), master.ch(i), v):
             min = i + 1
         else:
             max = i - 1
@@ -223,37 +222,26 @@ def sortByDistance(vlist, p):
     return rlist
 
 def segment_intersect(l1, l2, g1, g2, strict=True):
-    if (l1 in [l2, g1, g2] or l2 in [l1, g1, g2] or g1 in [l1, l2, g2] or g2 in [l1, l2, g1]):
+    if l1==l2 or l1==g1 or l1==g2 or l2==g1 or l2==g2 or g1==g2:
         return strict
-    return isLeftOf(l1, l2, g1) != isLeftOf(l1, l2, g2) and isLeftOf(g1, g2, l1) != isLeftOf(g1, g2, l2)
+    return isLeftOf_ns(l1, l2, g1) != isLeftOf_ns(l1, l2, g2) and isLeftOf_ns(g1, g2, l1) != isLeftOf_ns(g1, g2, l2)
 
 def circle_intersect(c1, r1, c2, r2):
     return get_distance(c1, c2) <= (math.sqrt(r1)+math.sqrt(r2))**2
 
 def occluded(v, left, right, target):
     for p in target.vertex_list[0:target.current_index]:
-        if p!=v and p!=left and p!=right and PointInTriangle(p, v, right, left):
+        if p!=v and p!=left and p!=right and PointInTriangle(p, v, left, right):
             return True
 
-    d = max(target.radius, get_distance(target.origin, v)+1)
+    d = get_distance(target.origin, v)
     relevant_hulls = [h for h in hulls if circle_intersect(h.origin, h.radius, target.origin, d)]
     for h in relevant_hulls:
         if h!=target:
             for i in range(len(h.convex_hull)):
                 if segment_intersect(h.ch(i), h.ch(i+1), v, left, strict=False): return True
                 if segment_intersect(h.ch(i), h.ch(i+1), v, right, strict=False): return True
-    #print(len(relevant_hulls))
     return False
 
-def m_sign (p1, p2, p3):
-    return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
-
 def PointInTriangle (pt, v1, v2, v3):
-    d1 = m_sign(pt, v1, v2);
-    d2 = m_sign(pt, v2, v3);
-    d3 = m_sign(pt, v3, v1);
-
-    has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0);
-    has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0);
-
-    return not (has_neg and has_pos);
+    return isRightOf_ns(v1, v2, pt) and isRightOf_ns(v2, v3, pt) and isRightOf_ns(v3, v1, pt)
