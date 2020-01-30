@@ -73,6 +73,7 @@ def get_all_areas(verts):
     while len(le)>1:
         oe = e = le.pop()
         while e.mark is not None:
+            if len(le)<1: return areas
             oe = e = le.pop()
 
         if verbose: print("\r"+str(len(le)), end='')
@@ -91,7 +92,6 @@ def get_all_areas(verts):
 
 def integrate_island(edge_on_island, vertices):
     island_edges = get_single_area(edge_on_island)
-
     for edge_on_island in island_edges:
         verts = vertices.copy()
         while len(verts)>0:
@@ -205,6 +205,7 @@ def resolve_inflex(inflex, edges, areas):
 
     if e is None:
         if verbose: print("ERR: Bisection Failed!")
+        HVIS.drawSinglePoint(ie.origin)
         return
 
     p1 = e.origin

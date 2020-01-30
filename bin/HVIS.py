@@ -1,6 +1,6 @@
 import matplotlib
-matplotlib.use("Agg")
-#matplotlib.use("TkAgg")
+#matplotlib.use("Agg")
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 
 import HCOMMON
@@ -78,8 +78,8 @@ def initVis():
     return fig,axs
 
 def show():
-    #plt.show()
-    plt.savefig("abc.png")
+    plt.show()
+    #plt.savefig("abc.png")
 
 #TODO: reuse branch solution drawing functions
 """

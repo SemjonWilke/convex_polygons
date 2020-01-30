@@ -226,14 +226,14 @@ def segment_intersect(l1, l2, g1, g2, strict=True):
     return isLeftOf(l1, l2, g1) != isLeftOf(l1, l2, g2) and isLeftOf(g1, g2, l1) != isLeftOf(g1, g2, l2)
 
 def circle_intersect(c1, r1, c2, r2):
-    return get_distance(c1, c2) <= r1+r2
+    return get_distance(c1, c2) <= (math.sqrt(r1)+math.sqrt(r2))**2
 
 def occluded(v, left, right, target):
     for p in target.vertex_list[0:target.current_index]:
         if p!=v and p!=left and p!=right and PointInTriangle(p, v, right, left):
             return True
 
-    d = get_distance(target.origin, v)
+    d = max(target.radius, get_distance(target.origin, v)+1)
     relevant_hulls = [h for h in hulls if circle_intersect(h.origin, h.radius, target.origin, d)]
     for h in relevant_hulls:
         if h!=target:
