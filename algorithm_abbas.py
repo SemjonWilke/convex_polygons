@@ -15,18 +15,20 @@ vertices = list()
 def _prod(a, b, v):
     return ((b[0] - a[0])*(v[1] - a[1]) - (b[1] - a[1])*(v[0] - a[0]))
 
-def v2nd_isLeftOf(a, b, v):
+def _isLeftOf(a, b, v):
     return _prod(a, b, v) >= 0.0
 
-def v3rd_isLeftOf(a, b, v):
+def _isStrictlyLeftOf(a, b, v):
     return _prod(a, b, v) > 0.0
 
-def isCollinear(a, b, v):
+def _isCollinear(a, b, v):
     return _prod(a, b, v) == 0.0
 
 def sort_by_Xcoord():
+    global indices
     assert(len(DCEL.points)>3)
-    DCEL.points.sort(key = lambda p: [p[0], p[1]] )
+    # DCEL.points.sort(key = lambda p: [p[0], p[1]] )
+    indices = [i[0] for i in sorted(enumerate(DCEL.points), key = lambda p: [p[1][0], p[1][1]])]
 
 def g_lower_half():
     global lower_hull, indices
@@ -37,14 +39,13 @@ def g_lower_half():
     lower_hull.append(indices[-1] ) 
     lower_hull.append(indices[-2] )
     for i in range(len(indices) - 3, -1, -1):
-        while( not v2nd_isLeftOf(DCEL.points[lower_hull[-1]], 
+        while( not _isLeftOf(DCEL.points[lower_hull[-1]], 
                 DCEL.points[lower_hull[-2]], DCEL.points[indices[i]]) ):
             lower_hull.pop()
             if len(lower_hull) < 2:
                 break
         lower_hull.append(indices[i])
-    indices = list( set(indices) - set(lower_hull[1:-1]) )
-    indices.sort()
+    indices = [ind for ind in indices if ind not in lower_hull[1:-1]]
 
 def g_upper_half():
     global upper_hull, indices
@@ -57,14 +58,13 @@ def g_upper_half():
     upper_hull.append(indices[0])
     upper_hull.append(indices[1])
     for i in range(2, len(indices)):
-        while(v3rd_isLeftOf(DCEL.points[upper_hull[-2]], 
+        while(_isStrictlyLeftOf(DCEL.points[upper_hull[-2]],  
                 DCEL.points[upper_hull[-1]], DCEL.points[indices[i]])):
             upper_hull.pop()
             if len(upper_hull)<2:
                 break
         upper_hull.append(indices[i])
-    indices = list( set(indices) - set(upper_hull) )
-    indices.sort()
+    indices = [ind for ind in indices if ind not in upper_hull]
 
 def g_upper_most_right(outer_hull, inner_hull):
     _h = -1
@@ -113,7 +113,7 @@ def shift_ind(f_in, l_in, inner_hull):
     curr = l_in+1
     if l_in == len(conv_hulls[inner_hull])-1:
         curr=0
-    while isCollinear(DCEL.points[conv_hulls[inner_hull][f_in]], 
+    while _isCollinear(DCEL.points[conv_hulls[inner_hull][f_in]], 
             DCEL.points[conv_hulls[inner_hull][l_in]],
             DCEL.points[conv_hulls[inner_hull][curr]]):
         l_in = curr
@@ -147,12 +147,12 @@ def connect_2_hulls(inner_hull, outer_hull):
                 vertices[conv_hulls[outer_hull][_l+1]].connect_to(vertices[conv_hulls[inner_hull][0]])
                 vertices[conv_hulls[outer_hull][_h-1]].connect_to(vertices[conv_hulls[inner_hull][0]])
             else:
-                while v2nd_isLeftOf( DCEL.points[conv_hulls[inner_hull][0]],
+                while _isLeftOf( DCEL.points[conv_hulls[inner_hull][0]],
                         DCEL.points[conv_hulls[outer_hull][_l]],
                         DCEL.points[conv_hulls[outer_hull][_h]]):
                     _h-=1
                 vertices[conv_hulls[outer_hull][_h+1]].connect_to(vertices[conv_hulls[inner_hull][0]])
-                if not isCollinear(DCEL.points[conv_hulls[inner_hull][0]],
+                if not _isCollinear(DCEL.points[conv_hulls[inner_hull][0]],
                         DCEL.points[conv_hulls[outer_hull][_l]],
                         DCEL.points[conv_hulls[outer_hull][_h]]):
                     vertices[conv_hulls[outer_hull][_h]].connect_to(vertices[conv_hulls[inner_hull][0]])           
@@ -168,19 +168,19 @@ def connect_2_hulls(inner_hull, outer_hull):
         att_out = conv_hulls[outer_hull].pop()
         if len(conv_hulls[inner_hull]) != 2:
             att_in = conv_hulls[inner_hull].pop()
-        if conv_hulls[inner_hull][0] != conv_hulls[inner_hull][-1] and isCollinear(DCEL.points[conv_hulls[inner_hull][0]], 
+        if conv_hulls[inner_hull][0] != conv_hulls[inner_hull][-1] and _isCollinear(DCEL.points[conv_hulls[inner_hull][0]], 
                 DCEL.points[conv_hulls[inner_hull][1]], 
-                DCEL.points[conv_hulls[inner_hull][-1]]) and isCollinear(DCEL.points[conv_hulls[inner_hull][-1]], 
+                DCEL.points[conv_hulls[inner_hull][-1]]) and _isCollinear(DCEL.points[conv_hulls[inner_hull][-1]], 
                 DCEL.points[conv_hulls[inner_hull][-2]], DCEL.points[conv_hulls[inner_hull][0]]):
                 Coll = True
                 l_in = len(conv_hulls[-1])-1
         while True:
             if not Coll:
                 l_in = shift_ind(f_in, l_in, inner_hull) 
-            if v2nd_isLeftOf(DCEL.points[conv_hulls[inner_hull][f_in]],
+            if _isLeftOf(DCEL.points[conv_hulls[inner_hull][f_in]],
                         DCEL.points[conv_hulls[inner_hull][l_in]], 
                         DCEL.points[conv_hulls[outer_hull][f_out]]):
-                while v2nd_isLeftOf(DCEL.points[conv_hulls[inner_hull][f_in]],
+                while _isLeftOf(DCEL.points[conv_hulls[inner_hull][f_in]],
                         DCEL.points[conv_hulls[inner_hull][l_in]], 
                         DCEL.points[conv_hulls[outer_hull][l_out]]):
                     f_out, l_out = update_outer_inds(f_out, l_out, outer_hull) 
@@ -208,8 +208,9 @@ def construct_hulls():
     else:
         ch = conv_hulls[-1];
         keeper = ch.pop()
-        if isCollinear(DCEL.points[ch[0]], DCEL.points[ch[1]], 
-                DCEL.points[ch[-1]]) and isCollinear(DCEL.points[ch[-1]], DCEL.points[ch[-2]], DCEL.points[ch[0]]):
+        if _isCollinear(DCEL.points[ch[0]], DCEL.points[ch[1]], 
+                DCEL.points[ch[-1]]) and _isCollinear(DCEL.points[ch[-1]],
+                DCEL.points[ch[-2]], DCEL.points[ch[0]]):
 
             DCEL.make_hull(vertices, ch[0:2])
             for i in range(1,len(ch)-1):
@@ -218,7 +219,9 @@ def construct_hulls():
             DCEL.make_hull(vertices, ch)
         ch.append(keeper)
 
-def _deg(_e):
+def __deg(_e):
+    if _e == None:
+        return 0
     _deg = 1
     __e = _e
     while __e.twin.nxt != _e:
@@ -237,12 +240,12 @@ def depth_search():
             break
         for v in range(len(conv_hulls[i])-1):
             _e = vertices[conv_hulls[i][v]].incidentEdge
-            if v2nd_isLeftOf(DCEL.points[_e.prev.origin.i],
+            if _isLeftOf(DCEL.points[_e.prev.origin.i],
                     DCEL.points[_e.twin.nxt.twin.origin.i],
-                    DCEL.points[conv_hulls[i][v]]) and v2nd_isLeftOf(DCEL.points[_e.twin.prev.origin.i], 
+                    DCEL.points[conv_hulls[i][v]]) and _isLeftOf(DCEL.points[_e.twin.prev.origin.i], 
                     DCEL.points[_e.nxt.twin.origin.i], 
                     DCEL.points[_e.twin.origin.i]):
-                    if(_deg(_e)>2 and _deg(vertices[conv_hulls[i][v+1]].incidentEdge)>2):
+                    if(__deg(_e)>2 and __deg(vertices[conv_hulls[i][v+1]].incidentEdge)>2):
                         _e.remove()
 
 def g_convex_hull():
@@ -257,6 +260,7 @@ def g_convex_hull():
 
     return lower_hull.copy()
 
+
 def build_mesh():
     global upper_hull, lower_hull, indices, conv_hulls, vertices
     while len(indices) > 0:
@@ -270,13 +274,15 @@ def build_mesh():
 
 
 def run(vbs, verts):
-    global verbose
+    global verbose, vertices
     verbose = vbs
     if verbose: print("Abbas' Algorithm")
-    global indices, vertices
-    vertices = verts;
+    vertices = verts
+
     sort_by_Xcoord()
-    indices = [i for i in range(len(DCEL.points))]
+    
     build_mesh()
 
-    return DCEL.get_edge_dict(verbose)
+    # return DCEL.get_edge_dict(verbose)
+
+    
