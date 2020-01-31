@@ -3,7 +3,7 @@ from HDCEL import Vertex, isLeftOf_s, isRightOf_s, isRightOf_ns
 import math
 import heapq
 
-verbose = True
+verbose = False
 
 local_full_edge_list = []
 local_edge_list = []
@@ -13,10 +13,10 @@ chull = []
 def init(verts):
     global local_full_edge_list, local_edge_list, areas, chull
     local_full_edge_list, local_edge_list = HDCEL.get_both_edge_lists()
+    chull = HDCEL.get_convex_hull(verts)
     if verbose: print("Acquiring all areas... ")
     areas = get_all_areas(verts)
     if verbose: print("Done")
-    chull = HDCEL.get_convex_hull(verts)
 
 def local_connect(a, b):
     global local_full_edge_list, local_edge_list
@@ -31,7 +31,7 @@ def local_remove(e):
     local_full_edge_list.remove(e)
     local_full_edge_list.remove(e.twin)
     if e in local_edge_list: local_edge_list.remove(e)
-    if e.twin in local_edge_list: local_edge_list.remove(e.twin)
+    elif e.twin in local_edge_list: local_edge_list.remove(e.twin)
     e.remove()
 
 def get_all_islands(verts):
