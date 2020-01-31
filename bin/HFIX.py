@@ -3,6 +3,7 @@ from HDCEL import Vertex, isLeftOf, isRightOf
 import HVIS
 import HCLEAN
 import math
+import heapq
 
 verbose = True
 
@@ -210,7 +211,12 @@ def get_single_area(e):
 def get_surrounding_area(p):
     global local_full_edge_list
     le = local_full_edge_list
-    #TODO: sort edges by distance to point?
+    #Performance: First check for the closest edges:
+    h = heapq.nsmallest(50, le, key=lambda x: get_distance(x.origin, p))
+    for e in h:
+        a = get_single_area(e)
+        if point_in_area(a, p): return a
+    print("heap not enough")
     for e in le:
         a = get_single_area(e)
         if point_in_area(a, p): return a
