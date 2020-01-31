@@ -4,7 +4,7 @@ import HVIS
 import HCLEAN
 import math
 
-verbose = False
+verbose = True
 
 local_full_edge_list = []
 local_edge_list = []
@@ -194,6 +194,9 @@ def run(verts):
         if convex:
             continue
         else:
+            if len(areas)>2*len(verts):
+                if verbose: print("DEADLOCK During Resolve Pass.")
+                # TODO: Resolve
             for i in inflexes:
                 resolve_inflex(i, get_single_area(i), areas)
 
@@ -263,11 +266,6 @@ def segment_intersect(l1, l2, g1, g2, strict=False):
         return not strict
     return isLeftOf(l1, l2, g1, strict=True) != isLeftOf(l1, l2, g2, strict=True) and isLeftOf(g1, g2, l1, strict=True) != isLeftOf(g1, g2, l2, strict=True)
 
-def segment_intersect2(l1, l2, g1, g2, strict=False):
-    if l1==l2 or l1==g1 or l1==g2 or l2==g1 or l2==g2 or g1==g2:
-        return not strict
-    return isLeftOf(l1, l2, g1, strict=True) != isLeftOf(l1, l2, g2, strict=False) and isLeftOf(g1, g2, l1, strict=True) != isLeftOf(g1, g2, l2, strict=False)
-
 def coll(origin, dir, edges, mul=2000000):
     dir = HDCEL.Vertex(dir.x-origin.x, dir.y-origin.y)
     dir = dir.mul(mul) #NOTE: Normalizing dir before multiplying breaks the program and I dont know why.
@@ -277,7 +275,7 @@ def coll(origin, dir, edges, mul=2000000):
     min_e = None
 
     for e in edges:
-        if segment_intersect2(origin, dir, e.origin, e.nxt.origin, strict=True):
+        if segment_intersect(origin, dir, e.origin, e.nxt.origin, strict=True):
             collision_point = findIntersection(origin, dir, e.origin, e.nxt.origin)
             if  get_distance(origin, collision_point) < min_dist:
                 min_dist = get_distance(origin, collision_point)
