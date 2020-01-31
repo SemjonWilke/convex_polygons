@@ -115,6 +115,7 @@ def integrate_island(edge_on_island, all_island_edges):
                         if edge_on_area.origin.mark==1 and can_place_edge2(edge_on_island.origin, edge_on_area.origin, all_island_edges) and can_place_edge2(edge_on_island.origin, edge_on_area.origin, a):
                             HDCEL.mark_depth_first(edge_on_island.origin, mark=1) # Mark this island as mainland
                             new_e = local_connect(edge_on_island.origin, edge_on_area.origin)
+                            all_island_edges.append(new_e)
                             areas.append(get_single_area_tuple_with_edges(new_e))
                             areas.append(get_single_area_tuple_with_edges(new_e.twin))
                             del areas[i]
