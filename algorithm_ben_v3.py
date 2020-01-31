@@ -7,10 +7,8 @@ from random import randint
 from enum import Enum
 import numpy as np
 from HJSON import readStartPoints
-import HMERGE
 import HCLEAN
 import HFIX
-import HVIS
 from HDCEL import are_colinear, isLeftOf_s, isRightOf_s, isLeftOf_ns, isRightOf_ns
 import threading
 
@@ -72,7 +70,7 @@ def run(_vertices, _filename, _verbose, _explicit):
     if verbose: print(str(len(islands)) + " Islands detected.")
     for island in islands:
         HFIX.integrate_island(island, all_island_edges)
-    
+
     # Resolve inflexes
     if verbose: print("Resolve pass...")
     HFIX.run(vertices)

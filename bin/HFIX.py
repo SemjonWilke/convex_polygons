@@ -1,7 +1,5 @@
 import HDCEL
-from HDCEL import Vertex, isLeftOf, isRightOf
-import HVIS
-import HCLEAN
+from HDCEL import Vertex, isLeftOf_s, isRightOf_s, isRightOf_ns
 import math
 import heapq
 
@@ -10,13 +8,15 @@ verbose = True
 local_full_edge_list = []
 local_edge_list = []
 areas = []
+chull = []
 
 def init(verts):
-    global local_full_edge_list, local_edge_list, areas
+    global local_full_edge_list, local_edge_list, areas, chull
     local_full_edge_list, local_edge_list = HDCEL.get_both_edge_lists()
     if verbose: print("Acquiring all areas... ")
     areas = get_all_areas(verts)
     if verbose: print("Done")
+    chull = HDCEL.get_convex_hull(verts)
 
 def local_connect(a, b):
     global local_full_edge_list, local_edge_list
@@ -35,9 +35,9 @@ def local_remove(e):
     e.remove()
 
 def get_all_islands(verts):
-    global local_full_edge_list
+    global local_full_edge_list, chull
 
-    master = HDCEL.get_convex_hull(verts)[0]
+    master = chull[0]
     HDCEL.mark_depth_first(master, mark=1) # 1 shall signify that this vertex is part of the main congolomerate
 
     islands = []
@@ -68,9 +68,8 @@ def extract_closest(vlist, p):
     return v
 
 def get_all_areas(verts):
-    global local_full_edge_list
+    global local_full_edge_list, chull
     le = local_full_edge_list.copy()
-    chull = HDCEL.get_convex_hull(verts)
 
     for i in range(len(chull)):
         le.remove(getEdge(chull[i-1], chull[i]))
@@ -89,7 +88,7 @@ def get_all_areas(verts):
         while e.nxt!=oe:
             area.append(e)
             if e.mark is None:
-                if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
+                if isLeftOf_s(e.prev.origin, e.origin, e.nxt.origin): inflexes.append(e)
                 e.mark = 1
 
             e = e.nxt
@@ -101,7 +100,7 @@ def get_all_areas(verts):
 #non convex areas allowed
 def contained_by_area_ncx(edges, v):
     le = [e for e in edges if (e.origin.y < v.y) != (e.nxt.origin.y < v.y)]
-    le = [e for e in le if (e.origin.y < v.y and isRightOf(e.origin, e.nxt.origin, v, strict=True)) or (e.nxt.origin.y < v.y and isRightOf(e.nxt.origin, e.origin, v, strict=True))]
+    le = [e for e in le if (e.origin.y < v.y and isRightOf_s(e.origin, e.nxt.origin, v)) or (e.nxt.origin.y < v.y and isRightOf_s(e.nxt.origin, e.origin, v))]
     if len(le)%2==0:
         return False
     return True
@@ -139,7 +138,7 @@ def can_place_edge2(a, b, elist):
     return True
 
 def point_on_edge(p, e):
-    if isLeftOf(e.origin, e.nxt.origin, p, strict=True) or isRightOf(e.origin, e.nxt.origin, p, strict=True):
+    if isLeftOf_s(e.origin, e.nxt.origin, p) or isRightOf_s(e.origin, e.nxt.origin, p):
         return False
     # p and e are colinear.
     em = get_distance(e.origin, e.nxt.origin)
@@ -180,7 +179,7 @@ def get_single_area_tuple(e):
     inflexes = []
 
     while e.nxt!=oe:
-        if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
+        if isLeftOf_s(e.prev.origin, e.origin, e.nxt.origin): inflexes.append(e)
         e = e.nxt
 
     return (len(inflexes)==0, inflexes, oe, -1)
@@ -192,7 +191,7 @@ def get_single_area_tuple_with_edges(e):
     area = []
     while e.nxt!=oe:
         area.append(e)
-        if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
+        if isLeftOf_s(e.prev.origin, e.origin, e.nxt.origin): inflexes.append(e)
         e = e.nxt
     area.append(e)
 
@@ -205,18 +204,16 @@ def get_single_area(e):
         area.append(e)
         e = e.nxt
     area.append(e)
-
     return area
 
 def get_surrounding_area(p):
     global local_full_edge_list
     le = local_full_edge_list
     #Performance: First check for the closest edges:
-    h = heapq.nsmallest(50, le, key=lambda x: get_distance(x.origin, p))
+    h = heapq.nsmallest(40, le, key=lambda x: get_distance(x.origin, p))
     for e in h:
         a = get_single_area(e)
         if point_in_area(a, p): return a
-    print("heap not enough")
     for e in le:
         a = get_single_area(e)
         if point_in_area(a, p): return a
@@ -224,7 +221,7 @@ def get_surrounding_area(p):
 
 def point_in_area(edgelist, p): #Note: only works for convex areas.
     for e in edgelist:
-        if isLeftOf(e.origin, e.nxt.origin, p, strict=True):
+        if isLeftOf_s(e.origin, e.nxt.origin, p):
             return False
     return True
 
@@ -250,7 +247,7 @@ def run(verts):
                 resolve_inflex(i, get_single_area(i), areas)
 
 def resolve_inflex(inflex, edges, areas):
-    if isRightOf(inflex.prev.origin, inflex.origin, inflex.nxt.origin, strict=False): return # This is not an inflex -> dont care
+    if isRightOf_ns(inflex.prev.origin, inflex.origin, inflex.nxt.origin): return # This is not an inflex -> dont care
 
     ie = inflex
     e = bisect(ie, edges)
@@ -267,11 +264,11 @@ def resolve_inflex(inflex, edges, areas):
 
     if ie.nxt.origin!=p1 and coll(ie.origin, p1, edges)[1] >= get_distance(ie.origin, p1):
         p1_valid = True
-        if isRightOf(ie.prev.origin, ie.origin, p1, strict=False) and isRightOf(ie.origin, ie.nxt.origin, p1, strict=False): p1_strong = True
+        if isRightOf_ns(ie.prev.origin, ie.origin, p1) and isRightOf_ns(ie.origin, ie.nxt.origin, p1): p1_strong = True
 
     if ie.prev.origin!=p2 and coll(ie.origin, p2, edges)[1] >= get_distance(ie.origin, p2):
         p2_valid = True
-        if isRightOf(ie.prev.origin, ie.origin, p2, strict=False) and isRightOf(ie.origin, ie.nxt.origin, p2, strict=False): p2_strong = True
+        if isRightOf_ns(ie.prev.origin, ie.origin, p2) and isRightOf_ns(ie.origin, ie.nxt.origin, p2): p2_strong = True
 
     if p1_strong:
         u = local_connect(ie.origin, p1)
@@ -313,7 +310,7 @@ def get_distance(v1, v2):
 def segment_intersect(l1, l2, g1, g2, strict=False):
     if l1==l2 or l1==g1 or l1==g2 or l2==g1 or l2==g2 or g1==g2:
         return not strict
-    return isLeftOf(l1, l2, g1, strict=True) != isLeftOf(l1, l2, g2, strict=True) and isLeftOf(g1, g2, l1, strict=True) != isLeftOf(g1, g2, l2, strict=True)
+    return isLeftOf_s(l1, l2, g1) != isLeftOf_s(l1, l2, g2) and isLeftOf_s(g1, g2, l1) != isLeftOf_s(g1, g2, l2)
 
 def coll(origin, dir, edges, mul=2000000):
     dir = HDCEL.Vertex(dir.x-origin.x, dir.y-origin.y)
