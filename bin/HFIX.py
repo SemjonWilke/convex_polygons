@@ -205,7 +205,6 @@ def resolve_inflex(inflex, edges, areas):
 
     if e is None:
         if verbose: print("ERR: Bisection Failed!")
-        HVIS.drawSinglePoint(ie.origin)
         return
 
     p1 = e.origin
@@ -244,6 +243,7 @@ def resolve_inflex(inflex, edges, areas):
         return
 
     else:
+        areas.append(get_single_area_tuple(inflex)) #Theoretically not necessary, but doesnt work without it (?)
         return
 
 
@@ -259,19 +259,25 @@ def get_distance(v1, v2):
 
 # May require strcit=True for colinear points?
 def segment_intersect(l1, l2, g1, g2, strict=False):
-    if len(set([l1,l2,g1,g2]))!=len([l1,l2,g1,g2]): return not strict
+    if l1==l2 or l1==g1 or l1==g2 or l2==g1 or l2==g2 or g1==g2:
+        return not strict
     return isLeftOf(l1, l2, g1, strict=True) != isLeftOf(l1, l2, g2, strict=True) and isLeftOf(g1, g2, l1, strict=True) != isLeftOf(g1, g2, l2, strict=True)
 
-def coll(origin, dir, edges):
+def segment_intersect2(l1, l2, g1, g2, strict=False):
+    if l1==l2 or l1==g1 or l1==g2 or l2==g1 or l2==g2 or g1==g2:
+        return not strict
+    return isLeftOf(l1, l2, g1, strict=True) != isLeftOf(l1, l2, g2, strict=False) and isLeftOf(g1, g2, l1, strict=True) != isLeftOf(g1, g2, l2, strict=False)
+
+def coll(origin, dir, edges, mul=2000000):
     dir = HDCEL.Vertex(dir.x-origin.x, dir.y-origin.y)
-    dir = dir.mul(2000000) #NOTE: Normalizing dir before multiplying breaks the program and I dont know why.
+    dir = dir.mul(mul) #NOTE: Normalizing dir before multiplying breaks the program and I dont know why.
     dir = origin.add(dir)
 
     min_dist = float('inf')
     min_e = None
 
     for e in edges:
-        if segment_intersect(origin, dir, e.origin, e.nxt.origin, strict=True):
+        if segment_intersect2(origin, dir, e.origin, e.nxt.origin, strict=True):
             collision_point = findIntersection(origin, dir, e.origin, e.nxt.origin)
             if  get_distance(origin, collision_point) < min_dist:
                 min_dist = get_distance(origin, collision_point)
@@ -291,5 +297,8 @@ def bisect(inflex, edges):
     dir = inflex.origin.add(dir)
 
     co, _ = coll(inflex.origin, dir, edges)
+
+    if co is None:
+        co, _ = coll(inflex.origin, dir, edges, mul=2000000000)
 
     return co
