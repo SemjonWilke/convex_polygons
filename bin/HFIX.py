@@ -9,6 +9,7 @@ verbose = True
 local_full_edge_list = []
 local_edge_list = []
 areas = []
+c_areas = []
 
 def init(verts):
     global local_full_edge_list, local_edge_list, areas
@@ -26,11 +27,13 @@ def local_connect(a, b):
     return e
 
 def local_remove(e):
-    global local_full_edge_list, local_edge_list
+    global local_full_edge_list, local_edge_list, c_areas
     local_full_edge_list.remove(e)
     local_full_edge_list.remove(e.twin)
     if e in local_edge_list: local_edge_list.remove(e)
     if e.twin in local_edge_list: local_edge_list.remove(e.twin)
+    if e in c_areas: c_areas.remove(e)
+    if e.twin in c_areas: c_areas.remove(e.twin)
     e.remove()
 
 def get_all_islands(verts):
@@ -151,6 +154,7 @@ def get_edge_below_point(p):
     return None
 
 def integrate(stray_points):
+    global c_areas
     if verbose: print(str(len(stray_points))+" stray points detected.")
     for i in range(len(stray_points)):
         if verbose: print("\r"+str(len(stray_points)-i), end="")
@@ -161,18 +165,26 @@ def integrate(stray_points):
         if e is not None:
             tmp1, tmp2 = e.origin, e.nxt.origin
             local_remove(e)
-            local_connect(tmp1, p)
-            local_connect(tmp2, p)
+            e1 = local_connect(tmp1, p)
+            e2 = local_connect(tmp2, p)
+            c_areas.append(e1)
+            c_areas.append(e2)
+            c_areas.append(e1.twin)
+            c_areas.append(e2.twin)
         # Stray point is inside of an area:
         else:
             a = get_surrounding_area(p)
             integrate_into_area(p, a)
 
 def integrate_into_area(p, edgelist):
+    global c_areas
     last_edge = local_connect(p, edgelist[0].origin)
     for e in edgelist[1:]:
         if HDCEL.angle(last_edge, e.origin) >= 180:
             last_edge = local_connect(p, e.origin)
+            c_areas.append(last_edge)
+            c_areas.append(last_edge.twin)
+
 
 def get_single_area_tuple(e):
     oe = e
@@ -208,27 +220,31 @@ def get_single_area(e):
     return area
 
 def get_surrounding_area(p):
-    global local_full_edge_list
-    le = local_full_edge_list
-    #TODO: sort edges by distance to point?
-    for e in le:
-        a = get_single_area(e)
-        if point_in_area(a, p): return a
+    global c_areas
+    for e in c_areas:
+        if point_in_area(e, p): return get_single_area(e)
+    if verbose: print("ERR: Failed to find surrounding area.")
     return None
 
-def point_in_area(edgelist, p): #Note: only works for convex areas.
-    for e in edgelist:
+def point_in_area(e, p): #Note: only works for convex areas.
+    oe = e
+    while e.nxt!=oe:
         if isLeftOf(e.origin, e.nxt.origin, p, strict=True):
             return False
+        e = e.nxt
+    if isLeftOf(e.origin, e.nxt.origin, p, strict=True):
+        return False
     return True
 
 
 def run(verts):
+    global c_areas
     deadlock_limit = 2*len(verts)
     while len(areas)>1:
         if verbose: print("\r"+str(len(areas)), end='')
         (convex, inflexes, edge, _) = areas.pop(0) # NOTE: at this point in the ptorgram there is no guarantee that the fourth element of the area tuple is valid.
         if convex:
+            c_areas.append(edge)
             continue
         else:
             if len(areas)>deadlock_limit:
