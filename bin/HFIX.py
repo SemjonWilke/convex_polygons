@@ -8,10 +8,14 @@ verbose = True
 
 local_full_edge_list = []
 local_edge_list = []
+areas = []
 
-def init():
-    global local_full_edge_list, local_edge_list
+def init(verts):
+    global local_full_edge_list, local_edge_list, areas
     local_full_edge_list, local_edge_list = HDCEL.get_both_edge_lists()
+    if verbose: print("Acquiring all areas... ")
+    areas = get_all_areas(verts)
+    if verbose: print("Done")
 
 def local_connect(a, b):
     global local_full_edge_list, local_edge_list
@@ -37,13 +41,14 @@ def get_all_islands(verts):
 
     islands = []
     le = [e for e in local_full_edge_list if e.origin.mark is None]
+    all_island_edges = le.copy()
     while len(le)>0:
         e = le[0]
         islands.append(e)
         HDCEL.mark_depth_first(e.origin, mark=2) # 2 shall signify that this vertex is part of an isolated island
         le = [e for e in le if e.origin.mark is None]
 
-    return islands
+    return islands, all_island_edges
 
 def getEdge(a, b):
     e = a.incidentEdge
@@ -79,33 +84,55 @@ def get_all_areas(verts):
         if verbose: print("\r"+str(len(le)), end='')
         inflexes = []
 
+        area = []
         while e.nxt!=oe:
+            area.append(e)
             if e.mark is None:
                 if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
                 e.mark = 1
 
             e = e.nxt
+        area.append(e)
 
-        areas.append((len(inflexes)==0, inflexes))
+        areas.append((len(inflexes)==0, inflexes, oe, area))
     return areas
 
-def integrate_island(edge_on_island, vertices):
+#non convex areas allowed
+def contained_by_area_ncx(edges, v):
+    le = [e for e in edges if (e.origin.y < v.y) != (e.nxt.origin.y < v.y)]
+    le = [e for e in le if (e.origin.y < v.y and isRightOf(e.origin, e.nxt.origin, v, strict=True)) or (e.nxt.origin.y < v.y and isRightOf(e.nxt.origin, e.origin, v, strict=True))]
+    if len(le)%2==0:
+        return False
+    return True
+
+def integrate_island(edge_on_island, all_island_edges):
+    global areas
     island_edges = get_single_area(edge_on_island)
-    for edge_on_island in island_edges:
-        verts = vertices.copy()
-        while len(verts)>0:
-            v = extract_closest(verts, edge_on_island.origin) # we'll just sort by distance to this point why not
-            if v.claimant is not None and v.mark==1:
-                if can_place_edge(edge_on_island.origin, v):
-                    HDCEL.mark_depth_first(edge_on_island.origin, mark=1) # Mark this island as mainland
-                    local_connect(edge_on_island.origin, v)
-                    return
+    for i, (_, _, _, a) in enumerate(areas):
+            if contained_by_area_ncx(a, edge_on_island.origin): #Found the surrounding area!
+                for edge_on_island in island_edges:
+                    for edge_on_area in a:
+                        if edge_on_area.origin.mark==1 and can_place_edge2(edge_on_island.origin, edge_on_area.origin, all_island_edges) and can_place_edge2(edge_on_island.origin, edge_on_area.origin, a):
+                            HDCEL.mark_depth_first(edge_on_island.origin, mark=1) # Mark this island as mainland
+                            new_e = local_connect(edge_on_island.origin, edge_on_area.origin)
+                            areas.append(get_single_area_tuple_with_edges(new_e))
+                            areas.append(get_single_area_tuple_with_edges(new_e.twin))
+                            del areas[i]
+                            return
     if verbose: print("ERR: Could not integrate island.")
 
 # Use this sparingly as it runs poorly
-def can_place_edge(a, b):
+def can_place_edge(a, b, allow_existing=True):
     global local_edge_list
+    if not allow_existing and b in [e.nxt.origin for e in a.get_connected_edges()]:
+        return False
     for e in local_edge_list:
+        if segment_intersect(e.origin, e.nxt.origin, a, b, strict=True):
+            return False
+    return True
+
+def can_place_edge2(a, b, elist):
+    for e in elist:
         if segment_intersect(e.origin, e.nxt.origin, a, b, strict=True):
             return False
     return True
@@ -155,7 +182,20 @@ def get_single_area_tuple(e):
         if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
         e = e.nxt
 
-    return (len(inflexes)==0, inflexes)
+    return (len(inflexes)==0, inflexes, oe, -1)
+
+def get_single_area_tuple_with_edges(e):
+    oe = e
+    inflexes = []
+
+    area = []
+    while e.nxt!=oe:
+        area.append(e)
+        if isLeftOf(e.prev.origin, e.origin, e.nxt.origin, strict=True): inflexes.append(e)
+        e = e.nxt
+    area.append(e)
+
+    return (len(inflexes)==0, inflexes, oe, area)
 
 def get_single_area(e):
     oe = e
@@ -184,19 +224,22 @@ def point_in_area(edgelist, p): #Note: only works for convex areas.
 
 
 def run(verts):
-    if verbose: print("Acquiring all areas... ")
-    areas = get_all_areas(verts)
-    if verbose: print("Done")
-
+    deadlock_limit = 2*len(verts)
     while len(areas)>1:
         if verbose: print("\r"+str(len(areas)), end='')
-        (convex, inflexes) = areas.pop(0)
+        (convex, inflexes, edge, _) = areas.pop(0) # NOTE: at this point in the ptorgram there is no guarantee that the fourth element of the area tuple is valid.
         if convex:
             continue
         else:
-            if len(areas)>2*len(verts):
-                if verbose: print("DEADLOCK During Resolve Pass.")
-                # TODO: Resolve
+            if len(areas)>deadlock_limit:
+                if verbose: print("INFO: Deadlock during resolve pass.")
+                for e in get_single_area(inflexes[0]):
+                    if e.origin != inflexes[0].origin and can_place_edge(e.origin, inflexes[0].origin, allow_existing=False):
+                        new_e = local_connect(e.origin, inflexes[0].origin)
+                        areas.append(get_single_area_tuple(new_e))
+                        areas.append(get_single_area_tuple(new_e.twin))
+                        deadlock_limit += len(verts)
+                        break
             for i in inflexes:
                 resolve_inflex(i, get_single_area(i), areas)
 
