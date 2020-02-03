@@ -1,4 +1,5 @@
 import time
+import math
 import random
 
 def pointdegree(edges,points):
@@ -21,7 +22,10 @@ def randomstart(points, seed=None, verbose=False):
 
 def snapshoot(start_t, msg, verbose=False):
     elp_t = time.process_time() - start_t
-    if verbose: print("%s time: %02.0f:%02.0f:%2.2f h" % (msg, elp_t/3600, elp_t/60, elp_t))
+    hours=math.floor(elp_t/3600)
+    minutes=math.floor(elp_t/60) - (hours*60)
+    seconds=(elp_t - (minutes*60)) - (hours*3600)
+    if verbose: print("%s time: %02.0f:%02.0f:%2.2f h" % (msg, hours, minutes, seconds))
 
 def snaptime():
     return time.process_time()
