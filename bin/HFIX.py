@@ -1,3 +1,4 @@
+
 import HDCEL
 from HDCEL import Vertex, isLeftOf_s, isRightOf_s, isRightOf_ns
 import math
@@ -179,7 +180,14 @@ def get_single_area_tuple(e):
     oe = e
     inflexes = []
 
+    """TODO this is NOT a fix, it simply aborts on infinite loops!"""
+    i = 0
     while e.nxt!=oe:
+        i+=1
+        if i > len(local_full_edge_list):
+            print("abort (0) due to inf loop")
+            exit(600)
+        """TODO"""
         if isLeftOf_s(e.prev.origin, e.origin, e.nxt.origin): inflexes.append(e)
         e = e.nxt
 
@@ -190,7 +198,14 @@ def get_single_area_tuple_with_edges(e):
     inflexes = []
 
     area = []
+    """TODO this is NOT a fix, it simply aborts on infinite loops!"""
+    i = 0
     while e.nxt!=oe:
+        i+=1
+        if i > len(local_full_edge_list):
+            print("abort (1) due to inf loop")
+            exit(600)
+        """TODO"""
         area.append(e)
         if isLeftOf_s(e.prev.origin, e.origin, e.nxt.origin): inflexes.append(e)
         e = e.nxt
