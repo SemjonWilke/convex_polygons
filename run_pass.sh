@@ -1,11 +1,16 @@
 #!/bin/bash
-COUNTER=10;
-while [ 1 ] ; do
-    echo -e "\n$(( $COUNTER )) $(( $COUNTER*10-1 ))"
+LL=5000
+LU=10000
+P=0
+while [ $P -le 30 ]; do
     for f in instances/*/*.instance.json; do
-        echo -en "\r\b\b$f\033[0K"
-        python3 presentation.py -l $(( $COUNTER )) $(( $COUNTER*10-1 )) $f -a ben_v3 -o -e 33 -v;
+        echo -en "$f"
+        L=$(grep -o "\"i\"" $f | wc -l)
+        if [ $L -gt $LL ]; then
+            if [ $L -le $LU ]; then
+                timeout 180 python3 presentation.py $f -a pass -o -e $P -v;
+            fi;
+        fi;
     done;
-
-    COUNTER=$(( $COUNTER*10 ));
+    P=$(( $P+5 ))
 done
