@@ -17,7 +17,7 @@
    "Semjon Kerner",
    "Abbas Mohammed Murrey"
   ],
-  "algorithm": "ben_v1",
+  "algorithm": "wave",
   "checker_feasible": "True",
   "checker_msg": "",
   "checker_obj_val": "33",

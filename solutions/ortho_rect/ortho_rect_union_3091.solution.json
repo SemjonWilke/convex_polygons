@@ -11,7 +11,7 @@
   "edges_better": "868",
   "degree_avg_overall": "47.08508573277257",
   "degree_max_overall": "31",
-  "algorithm": "ben_v3",
+  "algorithm": "pass",
   "authors": [
    "Konstantin Jaehne",
    "Benjamin Kahl",
