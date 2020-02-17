@@ -43,7 +43,7 @@ def getmeta(filename, edges, coord, alg):
              'algorithm' : alg, 'authors': ["Konstantin Jaehne", "Benjamin Kahl",
                                             "Semjon Kerner", "Abbas Mohammed Murrey"]}
 
-def writeTestSolution(filename, instance, coord, vbse, edges=[], overwrite=False, algorithm="ben_v1"):
+def writeTestSolution(filename, instance, coord, vbse, edges=[], overwrite=False, algorithm="wave"):
     """ writes edges to a solution file
     input:      filename as string
                 instance name as string
