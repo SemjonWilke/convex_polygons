@@ -234,6 +234,7 @@ def depth_search():
     global conv_hulls
     if len(conv_hulls) < 2:
         return
+        
     # for i in range(1, len(conv_hulls)-1):
     for i in range(1, len(conv_hulls)):
         if len(conv_hulls[i]) < 3:
