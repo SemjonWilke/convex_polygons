@@ -11,9 +11,9 @@ ax.set_ylim([0.24,0.67])
 plt.ylabel('score')
 plt.xlabel('#points')
 
-ben_v1=[[],[]]
-abbas=[[],[]]
-ben_v3=[[],[]]
+wave=[[],[]]
+nested=[[],[]]
+passbased=[[],[]]
 with open('rank.csv', 'r') as fp:
     reader = csv.reader(fp)
     for row in reader:
@@ -23,19 +23,19 @@ with open('rank.csv', 'r') as fp:
         else:
             m="+"
         if int(row[-1]) == 1: #v1
-            #ben_v1[0].append(int(row[1]))
-            #ben_v1[1].append(float(row[-2]))
+            #wave[0].append(int(row[1]))
+            #wave[1].append(float(row[-2]))
             a,=plt.plot(int(row[1]),float(row[-2]),"b"+m, label="single convex wave")
-        elif int(row[-1]) == 2: #abbas
-            #abbas[0].append(int(row[1]))
-            #abbas[1].append(float(row[-2]))
+        elif int(row[-1]) == 2: #nested
+            #nested[0].append(int(row[1]))
+            #nested[1].append(float(row[-2]))
             if m == "+":
                 b,=plt.plot(int(row[1]),float(row[-2]),"y"+m, label="nested hulls")
             else:
                 plt.plot(int(row[1]),float(row[-2]),"y"+m, label="nested hulls")
         elif int(row[-1]) == 3: #v3
-            #ben_v3[0].append(int(row[1]))
-            #ben_v3[1].append(float(row[-2]))
+            #passbased[0].append(int(row[1]))
+            #passbased[1].append(float(row[-2]))
             c,=plt.plot(int(row[1]),float(row[-2]),"r"+m, label="pass based")
 #"""
 plt.plot([0,1000000], [0.3726332959,0.3726332959], "b--", alpha=0.3)
@@ -53,9 +53,9 @@ plt.plot([0,1000000], [0.4441575996,0.4441575996], "r--", alpha=0.3)
 plt.text(1000000, 0.429, 'average', color="r", alpha=0.3, horizontalalignment="right")
 #"""
 
-#plt.plot(ben_v1[0],ben_v1[1],"b.", label="ben_v1")
-#plt.plot(abbas[0],abbas[1],"y.",label="abbas")
-#plt.plot(ben_v3[0],ben_v3[1],"r.",label="ben_v3")
+#plt.plot(wave[0],wave[1],"b.", label="wave")
+#plt.plot(nested[0],nested[1],"y.",label="nested")
+#plt.plot(passbased[0],passbased[1],"r.",label="passbased")
 #handles, labels = ax.get_legend_handles_labels()
 l = ax.legend(handles=[a,b,c])
 plt.show()

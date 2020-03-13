@@ -1,13 +1,13 @@
 ## Convex Polygons
 
-This repository contains algorithms and solutions for the CG:SHOP competition 2020.
+This repository contains algorithms for the convex partitioning of a pointset that were used for the CG:SHOP 2020 competition as well as the respective solutions.
 
-All Algorithms were created and implemented by Benjamin Kahl, Semjon Kerner, Abbas Mohammed Murrey and Konstantin Jaehne, students of computer scince at Freie Universität Berlin as part of a course by Prof. Günter Rote.
+All Algorithms were created and implemented by Benjamin Kahl, Semjon Kerner, Abbas Mohammed Murrey and Konstantin Jaehne, students of computer science at the Freie Universität Berlin as part of a course by Prof. Günter Rote.
 
 Further explanations will be added as a paper and will be linked here.
 You can find our final presentation for the course [here](https://github.com/SemjonKerner/convex_polygons/blob/b5412ddf3189458d07803e934d98bb67e8e7cc36/texinput/convex_polygons.pdf).
 
-The problem stated by this competition (see [CG:SHOP 2020](
+The problem, as stated by this competition (see [CG:SHOP 2020](
 https://cgshop.ibr.cs.tu-bs.de/competition/cg-shop-2020/)):  
 _Given a set S of n points in the plane. The objective is to compute a plane graph with vertex set S (with each point in S having positive degree) that partitions the convex hull of S into the smallest possible number of convex faces. Note that collinear points are allowed on face boundaries, so all internal angles of a face are at most π_
 
@@ -33,7 +33,7 @@ optional arguments:
 
 ## About the Algorithms
 We developed 4 Algorithms for this competition.
-Except from _nested hulls_ they are essentially evolutions of each other.
+With the exception of _nested hulls_, they are essentially evolutions of each other.
 
 ### Nested Hulls
 - Repeatedly creates convex hulls from unconnected vertices from outside to the inside.
@@ -44,17 +44,18 @@ This algorithm performs very well on instances with many collinear points.
 
 ### Single Convex Waves
 - Starting at one (random) point, it iteratively connects the closest point (by euclidean distance to the start point)
-- The created graph will allways keep a convex hull after connecting a new point
+- The created graph will always maintain a convex hull after connecting a new point
 - A point is connected to the most outer points on the convex hull and all points inbetween on the convex hull (except for points that are collinear on the convex hull)
 - Edges between those Points on the convex hull are deleted when the resulting face will be convex
 
-This algorithm was the fastest of all four.
+This algorithm is the fastest of all four.
 
 ### Merged Convex Waves
-We came up with the idea of starting at many start points, because we realized that _Single Convex Wave_ was not very efficient further from the start point, resulting in wave like graphs. Hence the name.
-Yet, starting with multiple start points and growing multiple convex hulls brought some unexpected difficulties.
-When two convex hulls grew into each other, the algorithm had to merge them to keep the convex hull intact. This merge is very costly in time complexity, code comprehensibility and number of vertices.
-This algorithm was the worst in all aspects, but still led us to a better approach.
+We came up with the idea of starting at many start points, because we realized that _Single Convex Wave_ produced suboptimal results on larger pointsets.
+Here we start multiple instances of _Single Convex Wave_ at various locations and merge them into one whenever a collision occurs.
+However, the merging procedure is computationally expensive, suffers from poor code comprehensibility and produces large amounts number of edges.
+
+This algorithm performs the worst in all aspects, but served as a stepping stone for the significantly improved _Pass Based_ algorithm..
 
 ### Pass Based
 - This algorithm creates a polygon at given start points until all points were part of a polygon.
@@ -68,6 +69,9 @@ This algorithm was the worst in all aspects, but still led us to a better approa
 
 This algorithm performed best on most instances. It takes longer than _Nested Hulls_ and _Single Convex Wave_ though.
 There is still a known bug in this algorithm, but it happens very seldom and on very large instances.. but since the competition is over, we will probably not maintain this algorithm further or fix any bugs.
+
+Here are all four algorithms side by side on a 500 point instance:
+![picture](https://i.imgur.com/FA7LW13.png)
 
 ### Datastructure DCEL
 We used Doubly-Connected Edge List (DCEL) as our main datastructure. It allowed fast traversal on the graph with reasonable overhead.
