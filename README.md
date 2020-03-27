@@ -4,7 +4,7 @@ This repository contains algorithms for the convex partitioning of a pointset th
 
 All Algorithms were created and implemented by Benjamin Kahl, Semjon Kerner, Abbas Mohammed Murrey and Konstantin Jaehne, students of computer science at the Freie Universität Berlin as part of a course by Prof. Günter Rote.
 
-Further explanations will be added as a paper and will be linked here.
+A detailed explanation on our proceedings can be found in our course report [here](https://github.com/SemjonKerner/convex_polygons/blob/master/texinput/report.pdf).
 You can find our final presentation for the course [here](https://github.com/SemjonKerner/convex_polygons/blob/b5412ddf3189458d07803e934d98bb67e8e7cc36/texinput/convex_polygons.pdf).
 
 The problem, as stated by this competition (see [CG:SHOP 2020](
